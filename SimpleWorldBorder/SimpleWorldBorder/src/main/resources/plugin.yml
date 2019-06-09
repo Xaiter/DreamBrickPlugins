@@ -1,0 +1,4 @@
+main: dev.xaiter.spigot.simpleworldborder.App
+name: SimpleWorldBorder
+version: 0.1
+api-version: 1.13

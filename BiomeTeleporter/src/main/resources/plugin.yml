@@ -1,0 +1,8 @@
+main: dev.xaiter.spigot.biometeleporter.App
+name: biometeleporter
+version: 0.1
+api-version: 1.13
+commands:
+   biometp:
+      description: Internal command for biome teleporter.  Shouldn't be available to users.
+      usage: /biometp [biome] [minX] [minY] [minZ] [maxX] [maxY] [maxZ]
