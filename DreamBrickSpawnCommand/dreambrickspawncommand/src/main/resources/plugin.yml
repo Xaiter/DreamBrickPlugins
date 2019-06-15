@@ -1,0 +1,4 @@
+main: dev.xaiter.spigot.dreambrickspawncommand.App
+name: DreamBrickSpawnCommand
+version: 0.1
+api-version: 1.13
