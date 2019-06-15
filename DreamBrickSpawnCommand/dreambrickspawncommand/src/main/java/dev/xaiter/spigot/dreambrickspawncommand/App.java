@@ -56,6 +56,9 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
                 TeleportToSpawn(s, p);
                 MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
             }
+
+            // If we don't cancel, the player who gets into bed last won't be TP'd.  :(
+            e.setCancelled(true);
         }
     }
 
