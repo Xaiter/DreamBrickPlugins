@@ -93,7 +93,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     private void TeleportToSpawn(Server s, Player p) {
-        s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn" +  p.getName());
+        s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
     }
 
     private boolean TryPayForTeleport(Server s, Player p) {
