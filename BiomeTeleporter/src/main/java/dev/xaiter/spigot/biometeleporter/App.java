@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -137,32 +138,46 @@ public class App extends JavaPlugin implements CommandExecutor {
 
         // Issue the commands necessary to move the players to the overworld and spread them over the desired range!
         ConsoleCommandSender consoleSender = Bukkit.getConsoleSender();
+
+        // First generate a unique team name for these people...
+        String teamName = UUID.randomUUID().toString().replaceAll("\u2014", "").substring(0, 16);
+        s.dispatchCommand(consoleSender, "team add " +  teamName + " \"" + teamName + "\"");
+
+        // Put them all on a team, get them into the overworld!
         for(Player p : affectedPlayers) {
 
-            // Only players in The End can be teleported.
+            // Quick Sanity Check: Only players in The End can be teleported - if this isn't true, what the heck just happened?
             if(p.getWorld().getEnvironment() != Environment.THE_END) {
                 continue;
             }
 
+            // Join the team...
+            s.dispatchCommand(consoleSender, "team join " + teamName + " " + p.getName());
+
             // Get them into the overworld!
-            String cmd = "warp biometp_overworld_parking " + p.getName();
-            l.info(cmd);
-            s.dispatchCommand(consoleSender, cmd);
-
-            // Try to spread them around the chunk...
-            cmd = "spreadplayers " + targetChunkX + " " + targetChunkZ + " 0 64 false " + p.getName();
-            l.info(cmd);
-            boolean result = s.dispatchCommand(consoleSender, cmd);
-
-            // Did the previous command just fail?
-            if(!result) {
-                // oh crap send them back
-                cmd = "warp testwarp " + p.getName();
-                l.info(cmd);
-                s.dispatchCommand(consoleSender, cmd);
-            }
+            s.dispatchCommand(consoleSender, "warp biometp_overworld_parking " + p.getName());
         }
 
+        // Try to spread them around the chunk...
+        String cmd = "spreadplayers " + targetChunkX + " " + targetChunkZ + " 0 32 true @a[team=" + teamName + "]";
+        l.info(cmd);
+        boolean result = s.dispatchCommand(consoleSender, cmd);
+
+        // Did the previous command just fail?
+        if(!result) {
+            // oh crap send them back
+            for(Player p : affectedPlayers)
+                s.dispatchCommand(consoleSender, "warp biomertp " + p.getName());
+        } else {
+            // Set 'em to survival mode
+            for(Player p : affectedPlayers)
+                s.dispatchCommand(consoleSender, "gamemode survival " + p.getName());
+        }
+
+        // Either way, nuke the team now
+        s.dispatchCommand(consoleSender, "team remove " + teamName);
+
+        // We didn't generate an exception, whether or not the TP succeeded, so this command didn't "fail"
         return true;
     }
     private static boolean IsWithinBounds(Location loc, int minX, int maxX, int minY, int maxY, int minZ, int maxZ) {
