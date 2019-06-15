@@ -2,3 +2,7 @@ main: dev.xaiter.spigot.dreambrickspawncommand.App
 name: DreamBrickSpawnCommand
 version: 0.1
 api-version: 1.13
+commands:
+   spawn:
+      description: Sends you back to spawn.  Must be asleep.  Must have at least 5 vote flint in your dream bank.
+      usage: /spawn
