@@ -57,7 +57,6 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
             for(Player p : onlinePlayers) {
                 if(!p.isOp()) {
-                    s.broadcastMessage("Teleporting " + p.getName() + " to spawn because they are not an OP!");
                     TeleportToSpawn(s, p);
                     MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
                 }
@@ -141,13 +140,11 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
             // Ops don't count.
             if(p.getSleepTicks() == 0 && !p.isOp()) {
-                s.broadcastMessage(p.getName() + " is not OP and not asleep!");
                 return false;
             }
         }
 
         // Yep.
-        s.broadcastMessage("Everyone who isn't an OP is asleep!");
         return true;
     }
 
