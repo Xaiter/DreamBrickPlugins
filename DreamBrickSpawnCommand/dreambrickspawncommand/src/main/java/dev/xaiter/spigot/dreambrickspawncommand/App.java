@@ -48,13 +48,19 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         if(e.getBedEnterResult() != BedEnterResult.OK)
             return;
 
-        if(AreAllPlayersAsleep()) {
+        // If they managed to get into the bed, forcibly set their spawn location to ensure it sticks
+        e.getPlayer().setBedSpawnLocation(e.getBed().getLocation());
+
+        if(AreAllPlayersAsleep(e.getPlayer())) {
             Server s = Bukkit.getServer();
             Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
 
             for(Player p : onlinePlayers) {
-                TeleportToSpawn(s, p);
-                MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
+                if(!p.isOp()) {
+                    s.broadcastMessage("Teleporting " + p.getName() + " to spawn because they are not an OP!");
+                    TeleportToSpawn(s, p);
+                    MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
+                }
             }
 
             // If we don't cancel, the player who gets into bed last won't be TP'd.  :(
@@ -122,19 +128,26 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         p.spigot().sendMessage(message);
     }
 
-    private boolean AreAllPlayersAsleep() {
+    private boolean AreAllPlayersAsleep(Player eventOwner) {
         // Get all the players...
         Server s = Bukkit.getServer();
         Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
 
         // Is everyone asleep?
         for(Player p : onlinePlayers) {
+            // Skip the player who triggered the event, they're definitely "asleep" enough.
+            if(p.getName().equals(eventOwner.getName()))
+                continue;
+
             // Ops don't count.
-            if(!p.isSleeping() && !p.isOp())
+            if(p.getSleepTicks() == 0 && !p.isOp()) {
+                s.broadcastMessage(p.getName() + " is not OP and not asleep!");
                 return false;
+            }
         }
 
         // Yep.
+        s.broadcastMessage("Everyone who isn't an OP is asleep!");
         return true;
     }
 
