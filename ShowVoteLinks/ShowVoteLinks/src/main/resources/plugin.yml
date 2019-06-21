@@ -1,0 +1,4 @@
+main: dev.xaiter.spigot.showvotelinks.App
+name: ShowVoteLinks
+version: 0.1
+api-version: 1.13

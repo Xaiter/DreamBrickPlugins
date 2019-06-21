@@ -1,0 +1,15 @@
+{
+  "text":"[CLICK HERE]",
+  "extra":[
+    {
+      "hoverEvent": {
+        "action":"show_text",
+        "value":"%1$s",
+      },
+      "clickEvent": {
+        "action":"open_url",
+        "value":"%1$s",
+      },
+    }
+  ]
+}
