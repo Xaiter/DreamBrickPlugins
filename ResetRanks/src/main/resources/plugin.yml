@@ -1,0 +1,8 @@
+main: dev.hx.spigot.resetranks.App
+name: ResetRanks
+version: 0.1
+api-version: 1.13
+commands:
+   resetranks:
+      description: Reset a player's ranks.
+      usage: /resetranks [player]

@@ -166,16 +166,18 @@ public class App extends JavaPlugin implements CommandExecutor {
         // Did the previous command just fail?
         if(!result) {
             // oh crap send them back
-            for(Player p : affectedPlayers)
+            for(Player p : affectedPlayers) {
                 s.dispatchCommand(consoleSender, "warp biomertp " + p.getName());
+                s.dispatchCommand(consoleSender, "team join spawn " + p.getName());
+            }
         } else {
             // Set 'em to survival mode
-            for(Player p : affectedPlayers)
+            for(Player p : affectedPlayers) {
                 s.dispatchCommand(consoleSender, "gamemode survival " + p.getName());
-        }
 
-        // Either way, nuke the team now
-        s.dispatchCommand(consoleSender, "team remove " + teamName);
+                s.dispatchCommand(consoleSender, "resetranks " + p.getName());
+            }
+        }
 
         // We didn't generate an exception, whether or not the TP succeeded, so this command didn't "fail"
         return true;
