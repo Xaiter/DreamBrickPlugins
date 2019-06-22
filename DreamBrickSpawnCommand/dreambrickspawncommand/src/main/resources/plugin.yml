@@ -15,15 +15,31 @@ commands:
     description: Tells you the amount of Flint you have in your dream bank account.
     usage: /bal
     permission: dreambrickspawncommand.balance
+  rules:
+    description: Tells you about the server's rules.
+    usage: /rules
+    permission: dreambrickspawncommand.rules
+  discord:
+    description: Gives a link to the server's discord
+    usage: /discord
+    permission: dreambrickspawncommand.discord    
 
 permissions:
   dreambrickspawncommand.*:
     children:
       dreambrickspawncommand.spawn: true
       dreambrickspawncommand.balance: true
+      dreambrickspawncommand.rules: true
+      dreambrickspawncommand.discord: true
   dreambrickspawncommand.spawn:
     description: Allows a player to return to spawn while in a bed.
     default: true
   dreambrickspawncommand.balance:
     description: Shows a player's dream flint balance.
+    default: true
+  dreambrickspawncommand.rules:
+    description: Shows the rules, dang it.
+    default: true
+  dreambrickspawncommand.discord:
+    description: Shows the server's discord.
     default: true

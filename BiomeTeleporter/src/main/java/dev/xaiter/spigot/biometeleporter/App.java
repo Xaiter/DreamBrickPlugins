@@ -179,6 +179,8 @@ public class App extends JavaPlugin implements CommandExecutor {
             }
         }
 
+        s.dispatchCommand(consoleSender, "team remove " + teamName);
+
         // We didn't generate an exception, whether or not the TP succeeded, so this command didn't "fail"
         return true;
     }

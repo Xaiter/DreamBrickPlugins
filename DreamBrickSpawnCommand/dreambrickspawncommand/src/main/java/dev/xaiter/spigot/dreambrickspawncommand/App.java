@@ -17,8 +17,6 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
-
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 
@@ -30,22 +28,35 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     private final String MSG_TELEPORT_FAILED_CANNOT_AFFORD = "You need at least " + TELEPORT_COST + " vote flint to return to spawn! (Sorry!)";
     private final String BALANCE_SCOREBOARD_NAME = "balance";
 
-    private final String PERMISSIONS_BALANCE = "dreambrickspawncommand.balance";
     private final String PERMISSIONS_SPAWN = "dreambrickspawncommand.spawn";
+
+    private final BalanceCmd _balanceCmd;
+    private final DiscordCmd _discordCmd;
+    private final RulesCmd _rulesCmd;
+
+    public App() {
+        this._balanceCmd = new BalanceCmd(this);
+        this._discordCmd = new DiscordCmd(this);
+        this._rulesCmd = new RulesCmd(this);
+    }
+
 
     @Override
     public void onEnable() {
         PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
 
+        // Register Commands!
         this.getCommand("spawn").setExecutor(this);
-        this.getCommand("balance").setExecutor(this);
-        this.getCommand("bal").setExecutor(this);
+        this.getCommand("bal").setExecutor(this._balanceCmd);
+        this.getCommand("balance").setExecutor(this._balanceCmd);
+        this.getCommand("rules").setExecutor(this._rulesCmd);
+        this.getCommand("discord").setExecutor(this._discordCmd);
     }
 
     @Override
     public void onDisable() {
-        HandlerList.unregisterAll((Listener) this);
+        HandlerList.unregisterAll((Listener) this);     
     }
 
     @EventHandler
@@ -75,26 +86,6 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        boolean result = true;
-
-        // Discard the leading segment if present
-        if(label.contains(":")) {
-            label = label.split("\\:")[1];
-        }
-
-        if(label.equalsIgnoreCase("spawn")) {
-            result = onSpawnCommand(sender, command, label, args);
-        } else if(label.equalsIgnoreCase("balance") || label.equalsIgnoreCase("bal")) {
-            result = onBalanceCommand(sender, command, label, args);
-        } else {
-            result = false; // how did this happen
-        }
-
-        return result;
-    }
-
-    private boolean onSpawnCommand(CommandSender sender, Command command, String label, String[] args) {
-
         // Permissions check!
         if(!sender.hasPermission(PERMISSIONS_SPAWN)) {
             return false;
@@ -119,17 +110,6 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         
         // Finally, teleport the player and exit
         TeleportToSpawn(s, p);
-        return true;
-    }
-
-    private boolean onBalanceCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Permissions check!
-        if(!sender.hasPermission(PERMISSIONS_BALANCE)) {
-            return false;
-        }
-
-        Server s = Bukkit.getServer();
-        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"You have \",\"color\":\"gray\"},{\"score\":{\"name\":\"@p\",\"objective\":\"balance\"},\"color\":\"gold\",\"bold\":true},{\"text\":\" flint.\",\"color\":\"gray\",\"bold\":false}]");
         return true;
     }
 
