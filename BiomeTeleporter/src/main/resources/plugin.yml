@@ -3,6 +3,12 @@ name: biometeleporter
 version: 0.1
 api-version: 1.13
 commands:
-   biometp:
-      description: Internal command for biome teleporter.  Shouldn't be available to users.
-      usage: /biometp [biome] [minX] [minY] [minZ] [maxX] [maxY] [maxZ]
+  biometp:
+    description: Internal command for biome teleporter.  Shouldn't be available to users.
+    usage: /biometp [biome] [minX] [minY] [minZ] [maxX] [maxY] [maxZ]
+    permission: biometeleporter:biometp
+
+permissions:
+  biometeleporter.biometp:
+    description: Permissions for internal command.  Users shouldn't have this.
+    default: op
