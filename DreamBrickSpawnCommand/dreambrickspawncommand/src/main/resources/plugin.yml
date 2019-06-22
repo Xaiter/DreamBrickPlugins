@@ -3,6 +3,27 @@ name: DreamBrickSpawnCommand
 version: 0.1
 api-version: 1.13
 commands:
-   spawn:
-      description: Sends you back to spawn.  Must be asleep.  Must have at least 5 vote flint in your dream bank.
-      usage: /spawn
+  spawn:
+    description: Sends you back to spawn.  Must be asleep.  Must have at least 5 flint in the dream bank.
+    usage: /spawn
+    permission: dreambrickspawncommand.spawn
+  balance:
+    description: Tells you the amount of Flint you have in your dream bank account.
+    usage: /balance
+    permission: dreambrickspawncommand.balance
+  bal:
+    description: Tells you the amount of Flint you have in your dream bank account.
+    usage: /bal
+    permission: dreambrickspawncommand.balance
+
+permissions:
+  dreambrickspawncommand.*:
+    children:
+      dreambrickspawncommand.spawn: true
+      dreambrickspawncommand.balance: true
+  dreambrickspawncommand.spawn:
+    description: Allows a player to return to spawn while in a bed.
+    default: true
+  dreambrickspawncommand.balance:
+    description: Shows a player's dream flint balance.
+    default: true

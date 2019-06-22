@@ -30,11 +30,17 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     private final String MSG_TELEPORT_FAILED_CANNOT_AFFORD = "You need at least " + TELEPORT_COST + " vote flint to return to spawn! (Sorry!)";
     private final String BALANCE_SCOREBOARD_NAME = "balance";
 
+    private final String PERMISSIONS_BALANCE = "dreambrickspawncommand.balance";
+    private final String PERMISSIONS_SPAWN = "dreambrickspawncommand.spawn";
+
     @Override
     public void onEnable() {
         PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
+
         this.getCommand("spawn").setExecutor(this);
+        this.getCommand("balance").setExecutor(this);
+        this.getCommand("bal").setExecutor(this);
     }
 
     @Override
@@ -69,25 +75,61 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        boolean result = true;
+
+        // Discard the leading segment if present
+        if(label.contains(":")) {
+            label = label.split("\\:")[1];
+        }
+
+        if(label.equalsIgnoreCase("spawn")) {
+            result = onSpawnCommand(sender, command, label, args);
+        } else if(label.equalsIgnoreCase("balance") || label.equalsIgnoreCase("bal")) {
+            result = onBalanceCommand(sender, command, label, args);
+        } else {
+            result = false; // how did this happen
+        }
+
+        return result;
+    }
+
+    private boolean onSpawnCommand(CommandSender sender, Command command, String label, String[] args) {
+
+        // Permissions check!
+        if(!sender.hasPermission(PERMISSIONS_SPAWN)) {
+            return false;
+        }
+
         Player p = GetPlayer(sender.getName());
 
         // Wait, what?  Who sent this command?
         if(p == null) 
-            return false;
+            return true;
 
         // Hey!  You need to be asleep to dream!
         if(!p.isSleeping()) {
             MessagePlayer(p, MSG_TELEPORT_FAILED_NOT_ASLEEP, ChatColor.RED);
-            return false;
+            return true;
         }
 
         // Okay, check if the player can afford it, and charge them if they can!
         Server s = Bukkit.getServer();
         if(!TryPayForTeleport(s, p))
-            return false;
+            return true;
         
         // Finally, teleport the player and exit
         TeleportToSpawn(s, p);
+        return true;
+    }
+
+    private boolean onBalanceCommand(CommandSender sender, Command command, String label, String[] args) {
+        // Permissions check!
+        if(!sender.hasPermission(PERMISSIONS_BALANCE)) {
+            return false;
+        }
+
+        Server s = Bukkit.getServer();
+        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"You have \",\"color\":\"gray\"},{\"score\":{\"name\":\"@p\",\"objective\":\"balance\"},\"color\":\"gold\",\"bold\":true},{\"text\":\"flint.\",\"color\":\"gray\",\"bold\":false}]");
         return true;
     }
 
