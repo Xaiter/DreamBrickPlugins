@@ -13,6 +13,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -36,6 +37,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     private RulesCmd _rulesCmd;
     private ClearChatCmd _clearChatCmd;
     private OpCommandFilter _commandFilter;
+    private NameFilter _nameFilter;
 
     public App() {
     }
@@ -51,6 +53,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         this._rulesCmd = new RulesCmd(this);
         this._clearChatCmd = new ClearChatCmd(this);
         this._commandFilter = new OpCommandFilter(this);
+        this._nameFilter = new NameFilter(this);
 
         // Register Commands!
         this.getCommand("spawn").setExecutor(this);
@@ -128,7 +131,12 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     public void onPlayerTab(PlayerCommandSendEvent e) {
         // We're just a passthrough.
         this._commandFilter.onPlayerTab(e);
-	}
+    }
+    
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent e) {
+        this._nameFilter.onPlayerJoin(e);
+    }
 
     private Player GetPlayer(String name) {
         Collection<? extends Player> players = GetOnlinePlayers();
