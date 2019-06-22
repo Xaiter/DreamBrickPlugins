@@ -22,7 +22,11 @@ commands:
   discord:
     description: Gives a link to the server's discord
     usage: /discord
-    permission: dreambrickspawncommand.discord    
+    permission: dreambrickspawncommand.discord
+  clearchat:
+    description: Clears the chat.  For staff use only.
+    usage: /clearchat
+    permission: dreambrickspawncommand.clearchat
 
 permissions:
   dreambrickspawncommand.*:
@@ -31,6 +35,7 @@ permissions:
       dreambrickspawncommand.balance: true
       dreambrickspawncommand.rules: true
       dreambrickspawncommand.discord: true
+      dreambrickspawncommand.clearchat: true
   dreambrickspawncommand.spawn:
     description: Allows a player to return to spawn while in a bed.
     default: true
@@ -43,3 +48,6 @@ permissions:
   dreambrickspawncommand.discord:
     description: Shows the server's discord.
     default: true
+  dreambrickspawncommand.clearchat:
+    description: Clears the chat.  For staff use only.
+    default: false

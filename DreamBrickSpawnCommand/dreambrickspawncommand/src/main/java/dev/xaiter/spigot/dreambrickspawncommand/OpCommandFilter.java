@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Sound;
@@ -19,28 +20,42 @@ public class OpCommandFilter implements Listener {
 
     private App _plugin;
 
-    private List<String> _allowedCommands;
+    private List<String> _defaultConfig;
+    private List<String> _helperConfig;
+    private List<String> _modConfig;
 
     public OpCommandFilter(App plugin) {
         this._plugin = plugin;
-        this._plugin.getDataFolder();
-
-        _allowedCommands = LoadConfig();
+        LoadConfigs();
     }
 
-    private List<String> LoadConfig() {
-        File configFile = new File(this._plugin.getDataFolder().toString() + File.separator + "config.txt");
+    private void LoadConfigs() {
+        // Prepare the file paths...
+        File defaultConfigFile = new File(this._plugin.getDataFolder().toString() + File.separator + "config.txt");
+        File helperConfigFile = new File(this._plugin.getDataFolder().toString() + File.separator + "helper-config.txt");
+        File modConfigFile = new File(this._plugin.getDataFolder().toString() + File.separator + "mod-config.txt");
 
+        // Get all the configs...
+        _defaultConfig = LoadConfigFile(defaultConfigFile);
+        _helperConfig = LoadConfigFile(helperConfigFile);
+        _modConfig = LoadConfigFile(modConfigFile);
+
+        // Inherit in a chain...
+        _helperConfig.addAll(_defaultConfig);
+        _modConfig.addAll(_helperConfig);
+    }
+
+    private List<String> LoadConfigFile(File file) {
         try {
             // Make sure the file exists if it doesn't... and return nothing.
-            if (!configFile.exists()) {
-                configFile.getParentFile().mkdirs();
-                configFile.createNewFile();
+            if (!file.exists()) {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
                 return new ArrayList<String>();
             }
 
             // Otherwise, return all the lines!
-            return Files.readAllLines(configFile.toPath());
+            return Files.readAllLines(file.toPath());
         } catch (IOException e) {
             return new ArrayList<String>();
         }
@@ -48,13 +63,27 @@ public class OpCommandFilter implements Listener {
 
     @EventHandler
     public void onPlayerTab(PlayerCommandSendEvent e) {
-        // You're an OP?  Don't need to inspect, firehose of commands
-        if(e.getPlayer().isOp()) {
+        // You're an OP? Don't need to inspect, firehose of commands
+        Player p = e.getPlayer();
+        if (p.isOp()) {
             return;
         }
 
-        // Remove anything that's not explicitly allowed for non-ops so they aren't cluttered with garbage
-        e.getCommands().retainAll(this._allowedCommands);
+        // Get all their tags to pick the right scoreboard...
+        Set<String> scoreboardTags = p.getScoreboardTags();
+        List<String> selectedConfig = null;
+
+        if(scoreboardTags.contains("moderator")) {
+            selectedConfig = this._modConfig;
+        } else if(scoreboardTags.contains("helper")) {
+            selectedConfig = this._helperConfig;
+        } else {
+            selectedConfig = this._defaultConfig;
+        }
+
+        // Remove anything that's not explicitly allowed for non-ops so they aren't
+        // cluttered with garbage
+        e.getCommands().retainAll(selectedConfig);
 	}
 
 }

@@ -34,11 +34,11 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     private BalanceCmd _balanceCmd;
     private DiscordCmd _discordCmd;
     private RulesCmd _rulesCmd;
+    private ClearChatCmd _clearChatCmd;
     private OpCommandFilter _commandFilter;
 
     public App() {
     }
-
 
     @Override
     public void onEnable() {
@@ -49,6 +49,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         this._balanceCmd = new BalanceCmd(this);
         this._discordCmd = new DiscordCmd(this);
         this._rulesCmd = new RulesCmd(this);
+        this._clearChatCmd = new ClearChatCmd(this);
         this._commandFilter = new OpCommandFilter(this);
 
         // Register Commands!
@@ -57,6 +58,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         this.getCommand("balance").setExecutor(this._balanceCmd);
         this.getCommand("rules").setExecutor(this._rulesCmd);
         this.getCommand("discord").setExecutor(this._discordCmd);
+        this.getCommand("clearchat").setExecutor(this._clearChatCmd);
     }
 
     @Override
@@ -65,6 +67,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         HandlerList.unregisterAll((Listener) this._balanceCmd);
         HandlerList.unregisterAll((Listener) this._rulesCmd);
         HandlerList.unregisterAll((Listener) this._discordCmd);
+        HandlerList.unregisterAll((Listener) this._clearChatCmd);
     }
 
     @EventHandler
