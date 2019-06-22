@@ -3,6 +3,12 @@ name: ResetRanks
 version: 0.1
 api-version: 1.13
 commands:
-   resetranks:
-      description: Reset a player's ranks.
-      usage: /resetranks [player]
+  resetranks:
+    description: Reset a player's ranks.
+    usage: /resetranks [player]
+    permission: resetranks.resetranks
+
+permissions:
+  resetranks.resetranks:
+    description: Permissions for internal command.  Users shouldn't have this.
+    default: op
