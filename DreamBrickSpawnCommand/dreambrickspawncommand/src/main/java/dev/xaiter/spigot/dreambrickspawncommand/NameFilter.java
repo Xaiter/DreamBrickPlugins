@@ -9,13 +9,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
 
 public class NameFilter implements Listener {
@@ -36,19 +36,24 @@ public class NameFilter implements Listener {
         String playerUUID = p.getUniqueId().toString();
 
         //file path
-        File file = new File(this.plugin.getDataFolder().toString() + File.separator + playerUUID + ".txt");
+        File file = new File(this.plugin.getDataFolder().toString() + File.separator + "players" + File.separator + playerUUID + ".txt");
         
         try {
             BufferedReader reader = new BufferedReader(new FileReader(file));
 
             //read file (name previously associated with player's uuid)
-            String name = reader.readLine();
+            String oldName = reader.readLine();
 
             //if old name is not equal to new name...
-            if (!name.equals(p.getName())){
+            if (!oldName.equals(p.getName())){
+
+                Scoreboard scoreboard = s.getScoreboardManager().getMainScoreboard();
+                
                 //store old scoreboard into new
-                s.dispatchCommand(consoleSender, "execute store result score " + p.getName() + " balance run scoreboard players get " + name + " balance");
-                s.dispatchCommand(consoleSender, "scoreboard players reset " + name);
+                for (Objective o : scoreboard.getObjectives()){
+                    s.dispatchCommand(consoleSender, "execute store result score " + p.getName() + " " + o.getName() + " run scoreboard players get " + oldName + " " + o.getName());
+                }
+                s.dispatchCommand(consoleSender, "scoreboard players reset " + oldName);
 
                 //overrides old name with new name
                 createNewFile(file, p);
