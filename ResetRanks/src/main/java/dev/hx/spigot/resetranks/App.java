@@ -36,7 +36,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         }
 
         //kicks players from teams, then adds to correct team in increasing importance
-        s.dispatchCommand(consoleSender, "execute as " + args[0] + " run team leave @s");
+        s.dispatchCommand(consoleSender, "execute as " + args[0] + " if entity @s[tag=!donator1,tag=!donator2,tag=!donator3,tag=!helper,tag=!moderator,tag=!admin] run team leave @s");
         s.dispatchCommand(consoleSender, "execute as " + args[0] + " if entity @s[tag=donator1] run team join donator1 @s");
         s.dispatchCommand(consoleSender, "execute as " + args[0] + " if entity @s[tag=donator2] run team join donator2 @s");
         s.dispatchCommand(consoleSender, "execute as " + args[0] + " if entity @s[tag=donator3] run team join donator3 @s");
