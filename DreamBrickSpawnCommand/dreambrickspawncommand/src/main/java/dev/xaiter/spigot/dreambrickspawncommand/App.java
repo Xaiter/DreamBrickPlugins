@@ -12,6 +12,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -30,14 +31,12 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_SPAWN = "dreambrickspawncommand.spawn";
 
-    private final BalanceCmd _balanceCmd;
-    private final DiscordCmd _discordCmd;
-    private final RulesCmd _rulesCmd;
+    private BalanceCmd _balanceCmd;
+    private DiscordCmd _discordCmd;
+    private RulesCmd _rulesCmd;
+    private OpCommandFilter _commandFilter;
 
     public App() {
-        this._balanceCmd = new BalanceCmd(this);
-        this._discordCmd = new DiscordCmd(this);
-        this._rulesCmd = new RulesCmd(this);
     }
 
 
@@ -45,6 +44,12 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     public void onEnable() {
         PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
+
+        // Make fresh copies of our commands and filter...
+        this._balanceCmd = new BalanceCmd(this);
+        this._discordCmd = new DiscordCmd(this);
+        this._rulesCmd = new RulesCmd(this);
+        this._commandFilter = new OpCommandFilter(this);
 
         // Register Commands!
         this.getCommand("spawn").setExecutor(this);
@@ -56,7 +61,10 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     @Override
     public void onDisable() {
-        HandlerList.unregisterAll((Listener) this);     
+        HandlerList.unregisterAll((Listener) this);
+        HandlerList.unregisterAll((Listener) this._balanceCmd);
+        HandlerList.unregisterAll((Listener) this._rulesCmd);
+        HandlerList.unregisterAll((Listener) this._discordCmd);
     }
 
     @EventHandler
@@ -112,6 +120,12 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         TeleportToSpawn(s, p);
         return true;
     }
+
+    @EventHandler
+    public void onPlayerTab(PlayerCommandSendEvent e) {
+        // We're just a passthrough.
+        this._commandFilter.onPlayerTab(e);
+	}
 
     private Player GetPlayer(String name) {
         Collection<? extends Player> players = GetOnlinePlayers();

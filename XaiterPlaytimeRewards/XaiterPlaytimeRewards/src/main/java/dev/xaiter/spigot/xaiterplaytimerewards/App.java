@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Nameable;
@@ -31,12 +30,14 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.material.DirectionalContainer;
-import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
+
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 
 public class App extends JavaPlugin {
 
@@ -92,6 +93,7 @@ public class App extends JavaPlugin {
                 newScoreValue -= POINTS_PER_TOKEN;
                 Score tokenScore = balanceObjective.getScore(playerName);
                 tokenScore.setScore(tokenScore.getScore() + 1);
+                MessagePlayer(p, "[The Dream Bank deposits 1 Flint into your account...]", ChatColor.AQUA);
             }
 
             // And update their fractional score
@@ -105,5 +107,12 @@ public class App extends JavaPlugin {
             obj = mainScoreboard.registerNewObjective(name, name, displayName);
         }
         return obj;
+    }
+
+    private void MessagePlayer(Player p, String text, ChatColor color) {
+        TextComponent message = new TextComponent(text);
+        message.setItalic(true);
+        message.setColor(color);
+        p.spigot().sendMessage(message);
     }
 }
