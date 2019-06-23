@@ -39,7 +39,7 @@ public class BalanceCmd implements Listener, CommandExecutor {
         }
 
         Server s = Bukkit.getServer();
-        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"You have \",\"color\":\"gray\"},{\"score\":{\"name\":\"@p\",\"objective\":\"balance\"},\"color\":\"gold\",\"bold\":true},{\"text\":\" flint.\",\"color\":\"gray\",\"bold\":false}]");
+        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"You have \",\"color\":\"gray\"},{\"score\":{\"name\":\"" + sender.getName() + "\",\"objective\":\"balance\"},\"color\":\"gold\",\"bold\":true},{\"text\":\" flint.\",\"color\":\"gray\",\"bold\":false}]");
         return true;
     }
 }
