@@ -63,6 +63,9 @@ public class NameFilter implements Listener {
             //welcome message
             s.dispatchCommand(consoleSender, "tellraw @a [{\"text\":\"Welcome \",\"color\":\"gray\",\"bold\":\"false\"},{\"text\":\"" + p.getName() + "\",\"color\":\"gold\",\"bold\":\"true\"},{\"text\":\" to Dream's End!\",\"color\":\"gray\",\"bold\":\"false\"}]");
             
+            //sets balance to zero
+            s.dispatchCommand(consoleSender, "scoreboard players set " + p.getName() + " balance 0");
+            
             //creates a new file
             createNewFile(file, p);
         } catch (IOException e){
