@@ -90,7 +90,6 @@ public class NameFilter implements Listener {
             //writes player name to file
             writer = new BufferedWriter(new FileWriter(file));
             writer.write(p.getName());
-            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
