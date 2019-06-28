@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -173,17 +174,24 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
         // Is everyone asleep?
         for(Player p : onlinePlayers) {
+            // If anyone is exempt from the sleeping rule, they shouldn't count here.
+            if(p.isSleepingIgnored() || p.isOp())
+                continue;
+
+            // Skip 'em if not in the overworld
+            if(p.getWorld().getEnvironment() == World.Environment.NORMAL)
+                continue;
+
             // Skip the player who triggered the event, they're definitely "asleep" enough.
             if(p.getName().equals(eventOwner.getName()))
                 continue;
 
-            // Ops don't count.
-            if(p.getSleepTicks() == 0 && !p.isOp()) {
+            // Finally, let's see if this person isn't asleep, and exit if they aren't.
+            if(p.getSleepTicks() == 0)
                 return false;
-            }
         }
 
-        // Yep.
+        // Yep, everyone's asleep.
         return true;
     }
 
