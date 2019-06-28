@@ -85,7 +85,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
             Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
 
             for(Player p : onlinePlayers) {
-                if(!p.isOp()) {
+                if(IsPlayerValidSleepTarget(p)) {
                     TeleportToSpawn(s, p);
                     MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
                 }
@@ -174,12 +174,8 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
         // Is everyone asleep?
         for(Player p : onlinePlayers) {
-            // If anyone is exempt from the sleeping rule, they shouldn't count here.
-            if(p.isSleepingIgnored() || p.isOp())
-                continue;
-
-            // Skip 'em if not in the overworld
-            if(p.getWorld().getEnvironment() == World.Environment.NORMAL)
+            // Skip 'em if they're not a valid sleep target
+            if(!IsPlayerValidSleepTarget(p))
                 continue;
 
             // Skip the player who triggered the event, they're definitely "asleep" enough.
@@ -192,6 +188,18 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         }
 
         // Yep, everyone's asleep.
+        return true;
+    }
+
+    private boolean IsPlayerValidSleepTarget(Player p) {
+        // If anyone is exempt from the sleeping rule, they shouldn't count here.
+        if(p.isSleepingIgnored() || p.isOp())
+            return false;
+
+        // Skip 'em if not in the overworld
+        if(p.getWorld().getEnvironment() != World.Environment.NORMAL)
+            return false;
+            
         return true;
     }
 
