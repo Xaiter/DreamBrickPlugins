@@ -148,10 +148,13 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         if(p.isSleeping())
             p.wakeup(true);
 
+        // Grab their name, we don't want to rely on a reference that could be dead in 10 ticks
+        String playerName = p.getName();
+
         // Give them half a second to get out of bed
         s.getScheduler().scheduleSyncDelayedTask(this, () -> {
-            // And move them to spawn!
-            TeleportToSpawn(s, p);
+            Player tempPlayer = s.getPlayer(playerName);
+            TeleportToSpawn(s, tempPlayer);
         }, 10);
     }
 
@@ -172,7 +175,8 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     private void TeleportToSpawn(Server s, Player p) {
-        s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
+        if(p != null)
+            s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
     }
 
     private boolean TryPayForTeleport(Server s, Player p) {
