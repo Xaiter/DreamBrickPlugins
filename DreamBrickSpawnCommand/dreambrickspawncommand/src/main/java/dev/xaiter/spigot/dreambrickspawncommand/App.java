@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
+import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
 import org.bukkit.plugin.PluginManager;
@@ -86,7 +88,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
             for(Player p : onlinePlayers) {
                 if(IsPlayerValidSleepTarget(p)) {
-                    TeleportToSpawn(s, p);
+                    WakeUpAndTeleportPlayer(p, s);
                     MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
                 }
             }
@@ -94,6 +96,20 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
             // If we don't cancel, the player who gets into bed last won't be TP'd.  :(
             e.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onPlayerBedLeaveEvent(PlayerBedLeaveEvent e) {
+        Block bed = e.getBed();
+        if(bed == null) {
+            // Wait, what?  You left a bed that doesn't exist?            
+            return;
+        }
+        
+        // SET THE DAMN BED
+        e.getPlayer().setBedSpawnLocation(bed.getLocation());
+        e.setSpawnLocation(true);
+        e.getPlayer().setBedSpawnLocation(bed.getLocation());
     }
 
     @Override
@@ -120,9 +136,23 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         if(!TryPayForTeleport(s, p))
             return true;
         
-        // Finally, teleport the player and exit
-        TeleportToSpawn(s, p);
+        // Kick them out of bed and TP time
+        WakeUpAndTeleportPlayer(p, s);
+
+        // Everything should have worked...
         return true;
+    }
+
+    private void WakeUpAndTeleportPlayer(Player p, Server s) {
+        // Okay, kick them out of bed and try to let the game set the spawn, maybe?
+        if(p.isSleeping())
+            p.wakeup(true);
+
+        // Give them half a second to get out of bed
+        s.getScheduler().scheduleSyncDelayedTask(this, () -> {
+            // And move them to spawn!
+            TeleportToSpawn(s, p);
+        }, 10);
     }
 
     @EventHandler
@@ -130,6 +160,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         // We're just a passthrough.
         this._commandFilter.onPlayerTab(e);
 	}
+
 
     private Player GetPlayer(String name) {
         Collection<? extends Player> players = GetOnlinePlayers();
