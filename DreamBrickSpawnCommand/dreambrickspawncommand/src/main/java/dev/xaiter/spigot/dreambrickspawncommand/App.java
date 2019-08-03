@@ -16,6 +16,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -75,6 +76,36 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent e)
+    {
+        TextComponent welcomeLine0 = new TextComponent("=============================================");
+        welcomeLine0.setObfuscated(true);
+
+        TextComponent welcomeLine1 = new TextComponent("Welcome to Dream's End");
+        welcomeLine1.setBold(true);
+        welcomeLine1.setColor(ChatColor.GOLD);
+
+        TextComponent welcomeLine2 = new TextComponent("On this server, the Spawn is not located in the Survival gameplay area.  You will need to enter a bed and type /spawn to return to spawn, and you will be returned to your bed upon exiting spawn.");
+        welcomeLine2.setBold(false);
+        welcomeLine2.setColor(ChatColor.GRAY);
+
+        TextComponent welcomeLine3 = new TextComponent("You may also teleport to Spawn by attempting to sleep through the night.  If all players in the Overworld are asleep and the night would be skipped, all sleeping players will be teleported to spawn for free and the night will be skipped.");
+        welcomeLine3.setBold(false);
+        welcomeLine3.setColor(ChatColor.GRAY);
+
+        TextComponent welcomeLine4 = new TextComponent("=============================================");
+        welcomeLine4.setObfuscated(true);
+
+        Player p = e.getPlayer();
+        p.spigot().sendMessage(welcomeLine0);
+        p.spigot().sendMessage(welcomeLine1);
+        p.spigot().sendMessage(welcomeLine2);
+        p.spigot().sendMessage(new TextComponent(""));
+        p.spigot().sendMessage(welcomeLine3);
+        p.spigot().sendMessage(welcomeLine4);
+    }
+
+    @EventHandler
     public void onPlayerBedEnterEvent(PlayerBedEnterEvent e) {
         // If they didn't successfully enter a bed, we can't possibly be in the correct state.
         if(e.getBedEnterResult() != BedEnterResult.OK)
@@ -96,7 +127,10 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
             }
 
             // If we don't cancel, the player who gets into bed last won't be TP'd.  :(
-            e.setCancelled(true);
+            // e.setCancelled(true);
+
+            // And skip the night (i'm gonna get so many complaints about this)
+            s.dispatchCommand(Bukkit.getConsoleSender(), "time set morning");
         }
     }
 
