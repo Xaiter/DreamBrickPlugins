@@ -87,11 +87,11 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
         TextComponent welcomeLine2 = new TextComponent("On this server, the Spawn is not located in the Survival gameplay area.  You will need to enter a bed and type /spawn to return to spawn, and you will be returned to your bed upon exiting spawn.");
         welcomeLine2.setBold(false);
-        welcomeLine2.setColor(ChatColor.GRAY);
+        welcomeLine2.setColor(ChatColor.DARK_AQUA);
 
         TextComponent welcomeLine3 = new TextComponent("You may also teleport to Spawn by attempting to sleep through the night.  If all players in the Overworld are asleep and the night would be skipped, all sleeping players will be teleported to spawn for free and the night will be skipped.");
         welcomeLine3.setBold(false);
-        welcomeLine3.setColor(ChatColor.GRAY);
+        welcomeLine3.setColor(ChatColor.DARK_AQUA);
 
         TextComponent welcomeLine4 = new TextComponent("=============================================");
         welcomeLine4.setObfuscated(true);
@@ -102,6 +102,8 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         p.spigot().sendMessage(welcomeLine2);
         p.spigot().sendMessage(new TextComponent(""));
         p.spigot().sendMessage(welcomeLine3);
+        p.spigot().sendMessage(new TextComponent(""));
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + e.getPlayer().getName() + " [\"\",{\"color\":\"dark_aqua\",\"text\":\"Got any questions?  Join our \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"https://discord.gg/F4eE6aM\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"color\":\"dark_aqua\",\"text\":\" or type /help for information on commands.\"}]");
         p.spigot().sendMessage(welcomeLine4);
     }
 
