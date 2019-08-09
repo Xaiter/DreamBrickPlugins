@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.block.Bed;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -116,24 +117,28 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         // If they managed to get into the bed, forcibly set their spawn location to ensure it sticks
         e.getPlayer().setBedSpawnLocation(e.getBed().getLocation());
 
-        if(AreAllPlayersAsleep(e.getPlayer())) {
-            Server s = Bukkit.getServer();
-            Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
+        // If not everyone is asleep, there's nothing to do
+        if(!AreAllPlayersAsleep(e.getPlayer()))
+            return;
 
-            for(Player p : onlinePlayers) {
-                if(IsPlayerValidSleepTarget(p)) {
-                    WakeUpAndTeleportPlayer(p, s);
-                    ResetTimeSinceRest(p);
-                    MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
-                }
+        // Time to send everyone to spawn - handy references we'll need.
+        Server s = Bukkit.getServer();
+        Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
+
+        // For each player in the correct state, send them to spawn FIVE seconds later.
+        for(Player p : onlinePlayers) {
+            if(IsPlayerValidSleepTarget(p)) {
+                WakeUpAndTeleportPlayer(p, s);
+                ResetTimeSinceRest(p);
+                MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
             }
-
-            // If we don't cancel, the player who gets into bed last won't be TP'd.  :(
-            // e.setCancelled(true);
-
-            // And skip the night (i'm gonna get so many complaints about this)
-            s.dispatchCommand(Bukkit.getConsoleSender(), "time set morning");
         }
+
+        // First, give them FOUR seconds to actually sleep and for the night to naturally skip...
+        // But if it doesn't, force the night to skip.  This should wake them up "naturally".
+        s.getScheduler().scheduleSyncDelayedTask(this, () -> {
+            s.dispatchCommand(Bukkit.getConsoleSender(), "time set morning");
+        }, 80);
     }
 
     private void ResetTimeSinceRest(Player p) {
@@ -142,16 +147,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     @EventHandler
     public void onPlayerBedLeaveEvent(PlayerBedLeaveEvent e) {
-        Block bed = e.getBed();
-        if(bed == null) {
-            // Wait, what?  You left a bed that doesn't exist?            
-            return;
-        }
-        
-        // SET THE DAMN BED
-        e.getPlayer().setBedSpawnLocation(bed.getLocation());
-        e.setSpawnLocation(true);
-        e.getPlayer().setBedSpawnLocation(bed.getLocation());
+        // unused for now...
     }
 
     @Override
@@ -186,18 +182,23 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     private void WakeUpAndTeleportPlayer(Player p, Server s) {
-        // Okay, kick them out of bed and try to let the game set the spawn, maybe?
-        if(p.isSleeping())
-            p.wakeup(true);
-
-        // Grab their name, we don't want to rely on a reference that could be dead in 10 ticks
+        // Grab their name, we don't want to rely on a reference that could be dead in 100 ticks
         String playerName = p.getName();
 
-        // Give them half a second to get out of bed
+        // Wait FIVE SECONDS for the night skip to naturally occur
         s.getScheduler().scheduleSyncDelayedTask(this, () -> {
+            // Make sure they're still connected...
             Player tempPlayer = s.getPlayer(playerName);
+            if(tempPlayer == null)
+                return;
+
+            // If they're somehow STILL asleep (HOW?) wake them up!
+            if(tempPlayer.isSleeping())
+                tempPlayer.wakeup(true);
+
+            // And move 'em.
             TeleportToSpawn(s, tempPlayer);
-        }, 10);
+        }, 100);
     }
 
     @EventHandler
@@ -205,7 +206,6 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         // We're just a passthrough.
         this._commandFilter.onPlayerTab(e);
 	}
-
 
     private Player GetPlayer(String name) {
         Collection<? extends Player> players = GetOnlinePlayers();
