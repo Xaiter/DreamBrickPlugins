@@ -41,6 +41,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     private DiscordCmd _discordCmd;
     private RulesCmd _rulesCmd;
     private ClearChatCmd _clearChatCmd;
+    private GetBedLocCmd _getBedLocCmd;
     private OpCommandFilter _commandFilter;
 
     public App() {
@@ -56,12 +57,14 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         this._discordCmd = new DiscordCmd(this);
         this._rulesCmd = new RulesCmd(this);
         this._clearChatCmd = new ClearChatCmd(this);
+        this._getBedLocCmd = new GetBedLocCmd(this);
         this._commandFilter = new OpCommandFilter(this);
 
         // Register Commands!
         this.getCommand("spawn").setExecutor(this);
         this.getCommand("bal").setExecutor(this._balanceCmd);
         this.getCommand("balance").setExecutor(this._balanceCmd);
+        this.getCommand("getbedloc").setExecutor(this._getBedLocCmd);
         this.getCommand("rules").setExecutor(this._rulesCmd);
         this.getCommand("discord").setExecutor(this._discordCmd);
         this.getCommand("clearchat").setExecutor(this._clearChatCmd);
@@ -71,6 +74,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     public void onDisable() {
         HandlerList.unregisterAll((Listener) this);
         HandlerList.unregisterAll((Listener) this._balanceCmd);
+        HandlerList.unregisterAll((Listener) this._getBedLocCmd);
         HandlerList.unregisterAll((Listener) this._rulesCmd);
         HandlerList.unregisterAll((Listener) this._discordCmd);
         HandlerList.unregisterAll((Listener) this._clearChatCmd);

@@ -27,6 +27,11 @@ commands:
     description: Clears the chat.  For staff use only.
     usage: /clearchat
     permission: dreambrickspawncommand.clearchat
+  getbedloc:
+    description: Gets a player's bed location.  For staff use only.
+    usage: /getbedloc [name]
+    permission: dreambrickspawncommand.getbedloc
+
 
 permissions:
   dreambrickspawncommand.*:
@@ -36,6 +41,7 @@ permissions:
       dreambrickspawncommand.rules: true
       dreambrickspawncommand.discord: true
       dreambrickspawncommand.clearchat: true
+      dreambrickspawncommand.getbedloc: true
   dreambrickspawncommand.spawn:
     description: Allows a player to return to spawn while in a bed.
     default: true
@@ -51,3 +57,6 @@ permissions:
   dreambrickspawncommand.clearchat:
     description: Clears the chat.  For staff use only.
     default: false
+  dreambrickspawncommand.getbedloc:
+    description: Gets a player's bed location.  For staff use only.
+    default: false    
