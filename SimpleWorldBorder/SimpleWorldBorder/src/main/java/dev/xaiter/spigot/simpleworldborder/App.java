@@ -55,13 +55,11 @@ public class App extends JavaPlugin implements Listener {
     private final long CHECK_INTERVAL_MILLISECONDS = 1500;
 
     private long _nextCheckMilliseconds = 0;
-    private Server server;
 
     @Override
     public void onEnable() {
         PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
-        server = Bukkit.getServer();
     }
 
     @Override
@@ -79,16 +77,10 @@ public class App extends JavaPlugin implements Listener {
         // Update the next check time
         _nextCheckMilliseconds = Instant.now().toEpochMilli() + CHECK_INTERVAL_MILLISECONDS;
 
-        Collection<Player> 	online = server.getOnlinePlayers();
-        for (Player p: online) {
-            fixPlayerPositionIfNeccessary(p);
-        }
-    }
-
-    private void fixPlayerPositionIfNeccessary(Player p) {
         // If they're in spawn, nothing to check
+        Player p = e.getPlayer();
         int x1 = (int)p.getLocation().getX();
-        if(x1 > SPAWN_MIN_X) {
+        if(x1 > SPAWN_MIN_X) { 
             return;
         }
 
@@ -97,7 +89,7 @@ public class App extends JavaPlugin implements Listener {
         int absX = Math.abs(x1);
         int absZ = Math.abs(z1);
         int fromX = (int)e.getFrom().getX();
-        int fromZ = (int)e.getFrom().getZ();
+        int fromZ = (int)e.getFrom().getZ();        
 
         // Tracking variables set by the condition of the variables declared above
         boolean teleportBack = false;
@@ -144,7 +136,7 @@ public class App extends JavaPlugin implements Listener {
                 // Tell the player they went too far!
                 SendDireWarningMessage(p, "The world limit is " + WORLD_LIMIT + "!  TURN BACK!");
             } else {
-                // Okay, they're too far to just "push" back.  They need to be TP'd back.
+                // Okay, they're too far to just "push" back.  They need to be TP'd back.  
                 // We don't want to cancel the event here.
 
                 // Start by magnifying the teleport distance for spreadplayers safety
@@ -166,7 +158,7 @@ public class App extends JavaPlugin implements Listener {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd);
                 SendDireWarningMessage(p, "The world limit is " + WORLD_LIMIT + "!");
             }
-
+            
             //#region Temp Disabled Code?
             // // If their "from" coordinates are past the world limit too, damage them!
             // if(Math.abs(fromX) > WORLD_LIMIT || Math.abs(fromZ) > WORLD_LIMIT) {
