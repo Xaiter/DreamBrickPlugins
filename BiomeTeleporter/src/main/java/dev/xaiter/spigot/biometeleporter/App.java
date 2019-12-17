@@ -45,6 +45,9 @@ public class App extends JavaPlugin implements CommandExecutor {
         this._biomeCategories = _graphGenerator.GetBiomeCategories();
         
         this.getCommand("biometp").setExecutor(this);
+
+        // oh god stop doing it this way why am I doing this
+        //this.RegenerateData();
     }
 
     @Override
@@ -216,7 +219,7 @@ public class App extends JavaPlugin implements CommandExecutor {
         World w = Bukkit.getServer().getWorld("world");
         BiomeGraphGenerator t = new BiomeGraphGenerator(folder.toString());
         try {
-            t.GenerateBiomeData(folder.getAbsolutePath(), w, -10000, 10000, -10000, 10000, 32);
+            t.GenerateBiomeData(folder.getAbsolutePath(), w, -10000, 10000, -10000, 10000, 1);
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }

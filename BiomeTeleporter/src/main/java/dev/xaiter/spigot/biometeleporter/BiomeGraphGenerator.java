@@ -71,17 +71,17 @@ public class BiomeGraphGenerator {
         }
 
         // Whip up a thread pool, open the file streams...
-        ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
+        //ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
         _streamManager.OpenAllBiomeWriteStreams(GetBiomeCategories());
 
         try 
         {
             // And hit it!
             logger.info("Generating data...");
-            threadPool.invokeAll(stuff);
+            this.GenerateChunkData(logger, workIdCounter, totalChunkCount, w, this::GetBiomeCategory, _streamManager, topLeftChunkCenterX, topLeftChunkCenterZ, chunksPerRow);
         }
         finally {
-            threadPool.shutdown();
+            //threadPool.shutdown();
             _streamManager.CloseAllBiomeWriteStreams();
             logger.info("Done generating data!");
         }
@@ -104,8 +104,8 @@ public class BiomeGraphGenerator {
             int chunkZ = chunkCountOffsetMultiplierZ * 16 + topLeftChunkCenterZ;
 
             // Get the biome, FINALLY
-            Biome b = w.getBiome(chunkX, chunkZ);
-
+            Biome b = w.getBiome(chunkX, 64, chunkZ);
+            
             // Map the biome to a category and if it's Void, skip it.
             Biome biomeCategory = biomeCategoryLookup.apply(b);
             if(biomeCategory == Biome.THE_VOID) {
@@ -113,7 +113,7 @@ public class BiomeGraphGenerator {
             }
 
             // Logging!
-            // logger.info("[Thread #" + threadId + "] [Work Unit #" + workUnitId + "] [Biome: " + b.name() + "] [X: " + chunkX + "] [Z: " + chunkZ + "]");
+            logger.info("[Thread #" + threadId + "] [Work Unit #" + workUnitId + "] [Biome: " + b.name() + "] [X: " + chunkX + "] [Z: " + chunkZ + "]");
 
             // Otherwise, grab the correct file stream for it...
             BufferedOutputStream stream = streamManager.get(biomeCategory);
@@ -132,7 +132,8 @@ public class BiomeGraphGenerator {
             case PLAINS:
             case SUNFLOWER_PLAINS:
             case SAVANNA:
-            case SAVANNA_PLATEAU: {
+            case SAVANNA_PLATEAU:
+            case SNOWY_TUNDRA: {
                 return Biome.PLAINS;
             }
 
@@ -149,7 +150,14 @@ public class BiomeGraphGenerator {
             case GIANT_SPRUCE_TAIGA:
             case GIANT_SPRUCE_TAIGA_HILLS:
             case GIANT_TREE_TAIGA:
-            case GIANT_TREE_TAIGA_HILLS: {
+            case GIANT_TREE_TAIGA_HILLS:
+            case SNOWY_TAIGA:
+            case SNOWY_TAIGA_HILLS:
+            case WOODED_MOUNTAINS:
+            case FLOWER_FOREST:
+            case TALL_BIRCH_FOREST:
+            case TALL_BIRCH_HILLS:
+            case SNOWY_TAIGA_MOUNTAINS: {
                 return Biome.FOREST;
             }
 
@@ -163,7 +171,10 @@ public class BiomeGraphGenerator {
             // Mountains
             case MOUNTAINS:
             case GRAVELLY_MOUNTAINS:
-            case MODIFIED_GRAVELLY_MOUNTAINS: {
+            case MODIFIED_GRAVELLY_MOUNTAINS:
+            case SNOWY_MOUNTAINS:
+            case MOUNTAIN_EDGE:
+            case STONE_SHORE: {
                 return Biome.MOUNTAINS;
             }
 
