@@ -5,8 +5,6 @@ import java.util.Collection;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
-import org.bukkit.block.Bed;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -31,8 +29,10 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     private final int TELEPORT_COST = 5;
     private final String MSG_COLLECTIVE_DREAM = "You experience a collective dream...";
+    private final String MSG_COLLECTIVE_DREAM_TIME_WARNING = "[You will be teleported to spawn in 5 seconds]";
     private final String MSG_TELEPORT_FAILED_NOT_ASLEEP = "You must be asleep to teleport to spawn! (Enter a bed)";
     private final String MSG_TELEPORT_FAILED_CANNOT_AFFORD = "You need at least " + TELEPORT_COST + " vote flint to return to spawn! (Sorry!)";
+    private final String MSG_TELEPORT_FAILED_BED_OBSTRUCTED = "Teleport to Spawn failed.  Your bed is obstructed, you will not respawn at it.";
     private final String BALANCE_SCOREBOARD_NAME = "balance";
 
     private final String PERMISSIONS_SPAWN = "dreambrickspawncommand.spawn";
@@ -47,6 +47,9 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     public App() {
     }
 
+
+
+    // General Plug-In Events
     @Override
     public void onEnable() {
         PluginManager manager = getServer().getPluginManager();
@@ -112,6 +115,9 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         p.spigot().sendMessage(welcomeLine4);
     }
 
+
+
+    // Spawn Mechanic Methods
     @EventHandler
     public void onPlayerBedEnterEvent(PlayerBedEnterEvent e) {
         // If they didn't successfully enter a bed, we can't possibly be in the correct state.
@@ -135,6 +141,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
                 WakeUpAndTeleportPlayer(p, s);
                 ResetTimeSinceRest(p);
                 MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
+                MessagePlayer(p, MSG_COLLECTIVE_DREAM_TIME_WARNING, ChatColor.LIGHT_PURPLE);
             }
         }
 
@@ -143,10 +150,6 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         s.getScheduler().scheduleSyncDelayedTask(this, () -> {
             s.dispatchCommand(Bukkit.getConsoleSender(), "time set morning");
         }, 80);
-    }
-
-    private void ResetTimeSinceRest(Player p) {
-        p.setStatistic(Statistic.TIME_SINCE_REST, 0);
     }
 
     @EventHandler
@@ -185,6 +188,10 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         return true;
     }
 
+    private void ResetTimeSinceRest(Player p) {
+        p.setStatistic(Statistic.TIME_SINCE_REST, 0);
+    }
+
     private void WakeUpAndTeleportPlayer(Player p, Server s) {
         // Grab their name, we don't want to rely on a reference that could be dead in 100 ticks
         String playerName = p.getName();
@@ -205,24 +212,20 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         }, 100);
     }
 
-    @EventHandler
-    public void onPlayerTab(PlayerCommandSendEvent e) {
-        // We're just a passthrough.
-        this._commandFilter.onPlayerTab(e);
-	}
-
-    private Player GetPlayer(String name) {
-        Collection<? extends Player> players = GetOnlinePlayers();
-        for(Player p : players) {
-            if(p.getName().equalsIgnoreCase(name))
-                return p;
-        }
-        return null;
-    }
-
     private void TeleportToSpawn(Server s, Player p) {
-        if(p != null)
-            s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
+        // Safety checks
+        if(p == null || !p.isOnline()) {
+            return;
+        }
+
+        // Make sure the player isn't an idiot
+        if(IsBedObstructed(p)) {
+            MessagePlayer(p, MSG_TELEPORT_FAILED_BED_OBSTRUCTED, ChatColor.RED);
+            return;
+        }
+
+        // Okay, we're good, send 'em to spawn!
+        s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
     }
 
     private boolean TryPayForTeleport(Server s, Player p) {
@@ -239,13 +242,6 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         // Charge the player!
         score.setScore(balance - TELEPORT_COST);
         return true;
-    }
-
-    private void MessagePlayer(Player p, String text, ChatColor color) {
-        TextComponent message = new TextComponent(text);
-        message.setBold(true);
-        message.setColor(color);
-        p.spigot().sendMessage(message);
     }
 
     private boolean AreAllPlayersAsleep(Player eventOwner) {
@@ -284,8 +280,40 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         return true;
     }
 
+    private boolean IsBedObstructed(Player p) {
+        return p.getBedSpawnLocation() == null;
+    }
+
+
+
+    // General Junk
+    private void MessagePlayer(Player p, String text, ChatColor color) {
+        TextComponent message = new TextComponent(text);
+        message.setBold(true);
+        message.setColor(color);
+        p.spigot().sendMessage(message);
+    }
+
+    private Player GetPlayer(String name) {
+        Collection<? extends Player> players = GetOnlinePlayers();
+        for(Player p : players) {
+            if(p.getName().equalsIgnoreCase(name))
+                return p;
+        }
+        return null;
+    }
+
     private Collection<? extends Player> GetOnlinePlayers() {
         Server s = Bukkit.getServer();
         return s.getOnlinePlayers();
     }
+
+
+
+    // Command Filter Event Passthrough
+    @EventHandler
+    public void onPlayerTab(PlayerCommandSendEvent e) {
+        // We're just a passthrough.
+        this._commandFilter.onPlayerTab(e);
+	}
 }

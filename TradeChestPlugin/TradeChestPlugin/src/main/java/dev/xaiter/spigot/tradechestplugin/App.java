@@ -5,16 +5,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Nameable;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Chest;
-import org.bukkit.block.data.BlockData;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -263,28 +259,5 @@ public class App extends JavaPlugin implements Listener {
         // I've had about enough of your shit, Spigot.
         e.setCancelled(true);
         e.setResult(Result.DENY);
-    }
-
-    private static void WriteFile(String filePath, String fileContent) {
-        BufferedWriter writer;
-
-        try {
-            writer = new BufferedWriter(new FileWriter(filePath));
-        } catch (IOException e1) {
-            e1.printStackTrace();
-            return;
-        }
-
-        try {
-            writer.write(fileContent);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }
