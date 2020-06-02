@@ -1,16 +1,15 @@
 package dev.xaiter.spigot.tradechestplugin;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Nameable;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Chest;
+import org.bukkit.block.data.type.Chest;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,23 +21,26 @@ import org.bukkit.event.inventory.InventoryEvent;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.Listener;
 import org.bukkit.event.Event.Result;
+import org.bukkit.inventory.BlockInventoryHolder;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.material.DirectionalContainer;
-import org.bukkit.material.MaterialData;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class App extends JavaPlugin implements Listener {
+
+    private static final EnumSet<InventoryAction> ALLOWED_INVENTORY_ACTIONS = EnumSet.of(InventoryAction.PICKUP_ALL, InventoryAction.PICKUP_HALF, InventoryAction.PICKUP_SOME, InventoryAction.PICKUP_ONE, 
+                                                                                         InventoryAction.PLACE_ALL,  InventoryAction.PLACE_SOME,  InventoryAction.PLACE_ONE);
 
     private static final String TRADE_CHEST_NAME = "Trade Chest";
 
     private static final int SPAWN_ZONE_SCAN_X_MIN = 28000000;
 
     private static final int NO_OWNER_ID = 8;
-    private static final int[] SLOT_ID_OWNERS = new int[] { 4, 4, 4, 4, NO_OWNER_ID, 2, 2, 2, 2, 4, 4, 4, 4,
-            NO_OWNER_ID, 2, 2, 2, 2, 4, 4, 4, 5, NO_OWNER_ID, 3, 2, 2, 2 };
+    private static final int[] SLOT_ID_OWNERS = new int[] { 4, 4, 4, 4, NO_OWNER_ID, 2, 2, 2, 2,
+                                                            4, 4, 4, 4, NO_OWNER_ID, 2, 2, 2, 2,
+                                                            4, 4, 4, 5, NO_OWNER_ID, 3, 2, 2, 2 };
     private static final int ACCEPT_TRADE_TOKEN_MASK = 1;
     private static final int ACCEPT_TRADE_TOKEN_SLOT_A = 21;
     private static final int ACCEPT_TRADE_TOKEN_SLOT_B = 23;
@@ -66,23 +68,23 @@ public class App extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onInventoryClick(InventoryClickEvent e) {
 
-        // Basic criteria check - Are you looking at a Trade Chest?
-        InventoryAction action = e.getAction();
-        if (!ShouldInterceptEvent(e))
-            return;
-
-        // If nothing, get outta here - someone's just trying to spam the server maybe?
-        // If so, screw you buddy!
-        if (action == InventoryAction.NOTHING) {
+        // Most basic check - did you actually click an item?
+        if(e.getCurrentItem() == null) {
             return;
         }
 
-        // When looking at the trade chest, only allow the most basic actions
-        // (PICK/PLACE)
-        if (action != InventoryAction.PICKUP_ALL && action != InventoryAction.PICKUP_HALF
-                && action != InventoryAction.PICKUP_SOME && action != InventoryAction.PICKUP_ONE
-                && action != InventoryAction.PLACE_ALL && action != InventoryAction.PLACE_SOME
-                && action != InventoryAction.PLACE_ONE) {
+        // Next, is the action NOTHING?
+        InventoryAction action = e.getAction();
+        if (action == null || action == InventoryAction.NOTHING) {
+            return;
+        }
+
+        // Okay, are you looking at a Trade Chest?
+        if (!ShouldInterceptEvent(e))
+            return;
+
+        // When looking at the trade chest, only allow the most basic actions (PICK/PLACE)
+        if (!ALLOWED_INVENTORY_ACTIONS.contains(action)) {
             CancelClickEvent(e);
             return;
         }
@@ -113,38 +115,38 @@ public class App extends JavaPlugin implements Listener {
         double chestCompareAxisValue = 0;
 
         // Now check the direction the chest is facing against the player's position...
-        Chest chest = (Chest) chestInv.getHolder();
-        MaterialData blockData = chest.getBlock().getState().getData();
-        DirectionalContainer dc = (DirectionalContainer) blockData;
+        BlockInventoryHolder chest = (BlockInventoryHolder)chestInv.getHolder();
+        BlockData blockData = chest.getBlock().getBlockData();
+        Chest dc = (Chest) blockData;
 
         // Check Chest facing, grab perpendicular h-axis
         BlockFace facing = dc.getFacing();
         switch (facing) {
-        case NORTH: {
-            playerCompareAxisValue = playerLoc.getX();
-            chestCompareAxisValue = chestLoc.getX();
-            break;
-        }
+            case NORTH: {
+                playerCompareAxisValue = playerLoc.getX();
+                chestCompareAxisValue = chestLoc.getX();
+                break;
+            }
 
-        case SOUTH: {
-            // When comparing for the opposite side, sneak in a inversion for the ID lookup
-            playerCompareAxisValue = -playerLoc.getX();
-            chestCompareAxisValue = -chestLoc.getX();
-            break;
-        }
+            case SOUTH: {
+                // When comparing for the opposite side, sneak in a inversion for the ID lookup
+                playerCompareAxisValue = -playerLoc.getX();
+                chestCompareAxisValue = -chestLoc.getX();
+                break;
+            }
 
-        case EAST: {
-            playerCompareAxisValue = playerLoc.getZ();
-            chestCompareAxisValue = chestLoc.getZ();
-            break;
-        }
+            case EAST: {
+                playerCompareAxisValue = playerLoc.getZ();
+                chestCompareAxisValue = chestLoc.getZ();
+                break;
+            }
 
-        default: {
-            // When comparing for the opposite side, sneak in a inversion for the ID lookup
-            playerCompareAxisValue = -playerLoc.getZ();
-            chestCompareAxisValue = -chestLoc.getZ();
-            break;
-        }
+            default: {
+                // When comparing for the opposite side, sneak in a inversion for the ID lookup
+                playerCompareAxisValue = -playerLoc.getZ();
+                chestCompareAxisValue = -chestLoc.getZ();
+                break;
+            }
         }
 
         // Figure out which slots the player should "own"...
@@ -189,23 +191,23 @@ public class App extends JavaPlugin implements Listener {
         SetTokenState(chestInv, ACCEPT_TRADE_TOKEN_SLOT_B, false);
     }
 
-    private static boolean IsWithinSpawn(InventoryClickEvent e) {
-        return e.getWhoClicked().getLocation().getBlockX() > SPAWN_ZONE_SCAN_X_MIN;
-    }
-
     private static boolean ShouldInterceptEvent(InventoryEvent e) {
         Inventory topInv = e.getView().getTopInventory();
         String chestName = null;
-        return topInv != null // If topInv is null, this definitely isn't a chest
-                && topInv.getLocation().getBlockX() > SPAWN_ZONE_SCAN_X_MIN // Min X check - should filter out +99% of
-                                                                            // clicks quickly
-                && topInv.getType() == InventoryType.CHEST // Inventory type check - if not a chest interaction, we
-                                                           // don't care. Quick.
-                && (chestName = ((Nameable) topInv.getHolder()).getCustomName()) != null // Name check for specific
-                                                                                         // types of chests. Slow-ish.
-                                                                                         // (We can assume it's Nameable
-                                                                                         // - all Chests implement
-                                                                                         // Nameable)
+        return
+                // If topInv is null, this definitely isn't a chest
+                topInv != null
+
+                // Min X check - should filter out +99% of clicks quickly
+                && topInv.getLocation().getBlockX() > SPAWN_ZONE_SCAN_X_MIN
+
+                // Inventory type check - if not a chest interaction, we don't care. Quick.
+                && topInv.getType() == InventoryType.CHEST
+
+                // Name check for specific types of chests. Slow-ish.
+                && (chestName = ((Nameable) topInv.getHolder()).getCustomName()) != null
+
+                // Okay, confirm that if this is a named chest, it's a Trade Chest.
                 && chestName.equals(TRADE_CHEST_NAME);
     }
 
