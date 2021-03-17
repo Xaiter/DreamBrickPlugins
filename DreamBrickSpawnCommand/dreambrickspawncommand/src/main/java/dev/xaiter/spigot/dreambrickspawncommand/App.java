@@ -1,21 +1,25 @@
 package dev.xaiter.spigot.dreambrickspawncommand;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
+import java.util.HashMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -25,7 +29,7 @@ import org.bukkit.Statistic;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 
-public class App extends JavaPlugin implements Listener, CommandExecutor {
+public class App extends JavaPlugin implements Listener {
 
     private final int TELEPORT_COST = 5;
     private final String MSG_COLLECTIVE_DREAM = "You experience a collective dream...";
@@ -37,11 +41,14 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_SPAWN = "dreambrickspawncommand.spawn";
 
+    private final HashMap<String, LocalDateTime> LAST_MOVED_TIMETABLE = new HashMap<String, LocalDateTime>();
+
     private BalanceCmd _balanceCmd;
     private DiscordCmd _discordCmd;
     private RulesCmd _rulesCmd;
     private ClearChatCmd _clearChatCmd;
     private GetBedLocCmd _getBedLocCmd;
+    private ReturnHomeCmd _returnHomeCmd;
     private OpCommandFilter _commandFilter;
 
     public App() {
@@ -52,7 +59,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     // General Plug-In Events
     @Override
     public void onEnable() {
-        PluginManager manager = getServer().getPluginManager();
+        final PluginManager manager = getServer().getPluginManager();
         manager.registerEvents(this, this);
 
         // Make fresh copies of our commands and filter...
@@ -61,6 +68,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         this._rulesCmd = new RulesCmd(this);
         this._clearChatCmd = new ClearChatCmd(this);
         this._getBedLocCmd = new GetBedLocCmd(this);
+        this._returnHomeCmd = new ReturnHomeCmd(this);
         this._commandFilter = new OpCommandFilter(this);
 
         // Register Commands!
@@ -68,6 +76,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         this.getCommand("bal").setExecutor(this._balanceCmd);
         this.getCommand("balance").setExecutor(this._balanceCmd);
         this.getCommand("getbedloc").setExecutor(this._getBedLocCmd);
+        this.getCommand("returnhome").setExecutor(this._returnHomeCmd);
         this.getCommand("rules").setExecutor(this._rulesCmd);
         this.getCommand("discord").setExecutor(this._discordCmd);
         this.getCommand("clearchat").setExecutor(this._clearChatCmd);
@@ -79,32 +88,33 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         HandlerList.unregisterAll((Listener) this._balanceCmd);
         HandlerList.unregisterAll((Listener) this._getBedLocCmd);
         HandlerList.unregisterAll((Listener) this._rulesCmd);
+        HandlerList.unregisterAll((Listener) this._returnHomeCmd);
         HandlerList.unregisterAll((Listener) this._discordCmd);
         HandlerList.unregisterAll((Listener) this._clearChatCmd);
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent e)
+    public void onPlayerJoin(final PlayerJoinEvent e)
     {
-        TextComponent welcomeLine0 = new TextComponent("=============================================");
+        final TextComponent welcomeLine0 = new TextComponent("=============================================");
         welcomeLine0.setObfuscated(true);
 
-        TextComponent welcomeLine1 = new TextComponent("Welcome to Dream's End");
+        final TextComponent welcomeLine1 = new TextComponent("Welcome to Dream's End");
         welcomeLine1.setBold(true);
         welcomeLine1.setColor(ChatColor.GOLD);
 
-        TextComponent welcomeLine2 = new TextComponent("On this server, the Spawn is not located in the Survival gameplay area.  You will need to enter a bed and type /spawn to return to spawn, and you will be returned to your bed upon exiting spawn.");
+        final TextComponent welcomeLine2 = new TextComponent("On this server, the Spawn is not located in the Survival gameplay area.  You will need to enter a bed and type /spawn to return to spawn, and you will be returned to your bed upon exiting spawn.");
         welcomeLine2.setBold(false);
         welcomeLine2.setColor(ChatColor.DARK_AQUA);
 
-        TextComponent welcomeLine3 = new TextComponent("You may also teleport to Spawn by attempting to sleep through the night.  If all players in the Overworld are asleep and the night would be skipped, all sleeping players will be teleported to spawn for free and the night will be skipped.");
+        final TextComponent welcomeLine3 = new TextComponent("You may also teleport to Spawn by attempting to sleep through the night.  If all players in the Overworld are asleep and the night would be skipped, all sleeping players will be teleported to spawn for free and the night will be skipped.");
         welcomeLine3.setBold(false);
         welcomeLine3.setColor(ChatColor.DARK_AQUA);
 
-        TextComponent welcomeLine4 = new TextComponent("=============================================");
+        final TextComponent welcomeLine4 = new TextComponent("=============================================");
         welcomeLine4.setObfuscated(true);
 
-        Player p = e.getPlayer();
+        final Player p = e.getPlayer();
         p.spigot().sendMessage(welcomeLine0);
         p.spigot().sendMessage(welcomeLine1);
         p.spigot().sendMessage(welcomeLine2);
@@ -119,7 +129,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     // Spawn Mechanic Methods
     @EventHandler
-    public void onPlayerBedEnterEvent(PlayerBedEnterEvent e) {
+    public void onPlayerBedEnterEvent(final PlayerBedEnterEvent e) {
         // If they didn't successfully enter a bed, we can't possibly be in the correct state.
         if(e.getBedEnterResult() != BedEnterResult.OK)
             return;
@@ -132,11 +142,11 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
             return;
 
         // Time to send everyone to spawn - handy references we'll need.
-        Server s = Bukkit.getServer();
-        Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
+        final Server s = Bukkit.getServer();
+        final Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
 
         // For each player in the correct state, send them to spawn FIVE seconds later.
-        for(Player p : onlinePlayers) {
+        for(final Player p : onlinePlayers) {
             if(IsPlayerValidSleepTarget(p)) {
                 WakeUpAndTeleportPlayer(p, s);
                 ResetTimeSinceRest(p);
@@ -153,18 +163,23 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     @EventHandler
-    public void onPlayerBedLeaveEvent(PlayerBedLeaveEvent e) {
+    public void onPlayerBedLeaveEvent(final PlayerBedLeaveEvent e) {
         // unused for now...
     }
 
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onPlayerMove(final PlayerMoveEvent event) {
+        this.LAST_MOVED_TIMETABLE.put(event.getPlayer().getName(), LocalDateTime.now());
+    }
+
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(final CommandSender sender, final Command command, final String label, final String[] args) {
         // Permissions check!
         if(!sender.hasPermission(PERMISSIONS_SPAWN)) {
             return false;
         }
 
-        Player p = GetPlayer(sender.getName());
+        final Player p = GetPlayer(sender.getName());
 
         // Wait, what?  Who sent this command?
         if(p == null) 
@@ -177,7 +192,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         }
 
         // Okay, check if the player can afford it, and charge them if they can!
-        Server s = Bukkit.getServer();
+        final Server s = Bukkit.getServer();
         if(!TryPayForTeleport(s, p))
             return true;
         
@@ -188,18 +203,18 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         return true;
     }
 
-    private void ResetTimeSinceRest(Player p) {
+    private void ResetTimeSinceRest(final Player p) {
         p.setStatistic(Statistic.TIME_SINCE_REST, 0);
     }
 
-    private void WakeUpAndTeleportPlayer(Player p, Server s) {
+    private void WakeUpAndTeleportPlayer(final Player p, final Server s) {
         // Grab their name, we don't want to rely on a reference that could be dead in 100 ticks
-        String playerName = p.getName();
+        final String playerName = p.getName();
 
         // Wait FIVE SECONDS for the night skip to naturally occur
         s.getScheduler().scheduleSyncDelayedTask(this, () -> {
             // Make sure they're still connected...
-            Player tempPlayer = s.getPlayer(playerName);
+            final Player tempPlayer = s.getPlayer(playerName);
             if(tempPlayer == null)
                 return;
 
@@ -212,7 +227,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         }, 100);
     }
 
-    private void TeleportToSpawn(Server s, Player p) {
+    private void TeleportToSpawn(final Server s, final Player p) {
         // Safety checks
         if(p == null || !p.isOnline()) {
             return;
@@ -228,12 +243,12 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
     }
 
-    private boolean TryPayForTeleport(Server s, Player p) {
-        Objective o = s.getScoreboardManager().getMainScoreboard().getObjective(BALANCE_SCOREBOARD_NAME);
-        Score score = o.getScore(p.getName());
+    private boolean TryPayForTeleport(final Server s, final Player p) {
+        final Objective o = s.getScoreboardManager().getMainScoreboard().getObjective(BALANCE_SCOREBOARD_NAME);
+        final Score score = o.getScore(p.getName());
         
         // Can't afford it, we're done
-        int balance = score.getScore();
+        final int balance = score.getScore();
         if(balance < TELEPORT_COST) {
             MessagePlayer(p, MSG_TELEPORT_FAILED_CANNOT_AFFORD, ChatColor.RED);
             return false;
@@ -244,13 +259,13 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         return true;
     }
 
-    private boolean AreAllPlayersAsleep(Player eventOwner) {
+    private boolean AreAllPlayersAsleep(final Player eventOwner) {
         // Get all the players...
-        Server s = Bukkit.getServer();
-        Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
+        final Server s = Bukkit.getServer();
+        final Collection<? extends Player> onlinePlayers = s.getOnlinePlayers();
 
         // Is everyone asleep?
-        for(Player p : onlinePlayers) {
+        for(final Player p : onlinePlayers) {
             // Skip 'em if they're not a valid sleep target
             if(!IsPlayerValidSleepTarget(p))
                 continue;
@@ -268,35 +283,42 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
         return true;
     }
 
-    private boolean IsPlayerValidSleepTarget(Player p) {
+    private boolean IsPlayerValidSleepTarget(final Player p) {
         // If anyone is exempt from the sleeping rule, they shouldn't count here.
-        if(p.isSleepingIgnored() || p.isOp())
+        if(p.isSleepingIgnored() || p.isOp() || IsPlayerAFK(p.getName()))
             return false;
 
         // Skip 'em if not in the overworld
         if(p.getWorld().getEnvironment() != World.Environment.NORMAL)
             return false;
-            
+
         return true;
     }
 
-    private boolean IsBedObstructed(Player p) {
+    private boolean IsPlayerAFK(final String playerName) {
+        if(!this.LAST_MOVED_TIMETABLE.containsKey(playerName)) {
+            return false;
+        }
+        return ChronoUnit.SECONDS.between(this.LAST_MOVED_TIMETABLE.get(playerName), LocalDateTime.now()) > 299; // 5 minutes
+    }
+
+    private boolean IsBedObstructed(final Player p) {
         return p.getBedSpawnLocation() == null;
     }
 
 
 
     // General Junk
-    private void MessagePlayer(Player p, String text, ChatColor color) {
-        TextComponent message = new TextComponent(text);
+    private void MessagePlayer(final Player p, final String text, final ChatColor color) {
+        final TextComponent message = new TextComponent(text);
         message.setBold(true);
         message.setColor(color);
         p.spigot().sendMessage(message);
     }
 
-    private Player GetPlayer(String name) {
-        Collection<? extends Player> players = GetOnlinePlayers();
-        for(Player p : players) {
+    private Player GetPlayer(final String name) {
+        final Collection<? extends Player> players = GetOnlinePlayers();
+        for(final Player p : players) {
             if(p.getName().equalsIgnoreCase(name))
                 return p;
         }
@@ -304,7 +326,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
     }
 
     private Collection<? extends Player> GetOnlinePlayers() {
-        Server s = Bukkit.getServer();
+        final Server s = Bukkit.getServer();
         return s.getOnlinePlayers();
     }
 
@@ -312,7 +334,7 @@ public class App extends JavaPlugin implements Listener, CommandExecutor {
 
     // Command Filter Event Passthrough
     @EventHandler
-    public void onPlayerTab(PlayerCommandSendEvent e) {
+    public void onPlayerTab(final PlayerCommandSendEvent e) {
         // We're just a passthrough.
         this._commandFilter.onPlayerTab(e);
 	}

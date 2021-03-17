@@ -12,10 +12,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class BalanceCmd implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_BALANCE = "dreambrickspawncommand.balance";
-    private final JavaPlugin _plugin;
 
     public BalanceCmd(JavaPlugin plugin) {
-        this._plugin = plugin;
     }
 
     @Override

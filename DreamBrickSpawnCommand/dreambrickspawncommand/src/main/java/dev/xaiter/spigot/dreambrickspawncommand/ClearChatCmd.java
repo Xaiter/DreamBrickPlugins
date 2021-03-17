@@ -11,10 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class ClearChatCmd implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_CLEARCHAT = "dreambrickspawncommand.clearchat";
-    private final JavaPlugin _plugin;
 
     public ClearChatCmd(JavaPlugin plugin) {
-        this._plugin = plugin;
     }
 
     @Override

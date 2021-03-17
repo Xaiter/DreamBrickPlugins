@@ -31,6 +31,10 @@ commands:
     description: Gets a player's bed location.  For staff use only.
     usage: /getbedloc [name]
     permission: dreambrickspawncommand.getbedloc
+  returnhome:
+    description: Teleports you out of spawn, back to your bed.
+    usage: /returnhome
+    permission: dreambrickspawncommand.returnhome    
 
 
 permissions:
@@ -59,4 +63,7 @@ permissions:
     default: false
   dreambrickspawncommand.getbedloc:
     description: Gets a player's bed location.  For staff use only.
-    default: false    
+    default: false
+  dreambrickspawncommand.returnhome:
+    description: Teleports you out of spawn, back to your bed.
+    default: false        

@@ -2,7 +2,6 @@ package dev.xaiter.spigot.dreambrickspawncommand;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -14,41 +13,32 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class GetBedLocCmd implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_GETBEDLOC = "dreambrickspawncommand.getbedloc";
-    private final JavaPlugin _plugin;
 
     public GetBedLocCmd(JavaPlugin plugin) {
-        this._plugin = plugin;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         // Permissions check!
-        if(!sender.hasPermission(PERMISSIONS_GETBEDLOC)) {
+        if (!sender.hasPermission(PERMISSIONS_GETBEDLOC)) {
             return false;
         }
 
-        if(args.length != 1) {
+        if (args.length != 1) {
             return false;
         }
 
         Location bedLoc = null;
         Server s = Bukkit.getServer();
         Player onlinePlayer = s.getPlayer(args[0]);
-        if(onlinePlayer != null)
+        if (onlinePlayer != null)
             bedLoc = onlinePlayer.getBedSpawnLocation();
-        else
-        {
-            OfflinePlayer p = Bukkit.getServer().getOfflinePlayer(args[0]);
-            if(p != null)
-                bedLoc = p.getBedSpawnLocation();
-            else
-            {
-                sender.sendMessage("Player could not be located.  Try again when they are online.");
-                return true;
-            }
+        else {
+            sender.sendMessage("Player could not be located.  Try again when they are online.");
+            return true;
         }
 
-        if(bedLoc != null)
+        if (bedLoc != null)
             sender.sendMessage("X: " + bedLoc.getBlockX() + " / Y: " + bedLoc.getBlockY() + " / Z: " + bedLoc.getBlockZ());
         else
             sender.sendMessage("No bed located.");

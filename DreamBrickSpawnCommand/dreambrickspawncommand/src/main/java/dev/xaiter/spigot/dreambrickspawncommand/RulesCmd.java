@@ -11,10 +11,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class RulesCmd implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_RULES = "dreambrickspawncommand.rules";
-    private final JavaPlugin _plugin;
 
     public RulesCmd(JavaPlugin plugin) {
-        this._plugin = plugin;
     }
 
     @Override
