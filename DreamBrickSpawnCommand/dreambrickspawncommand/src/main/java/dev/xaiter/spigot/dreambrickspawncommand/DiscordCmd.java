@@ -11,8 +11,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class DiscordCmd implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_DISCORD = "dreambrickspawncommand.discord";
+    private String _discordLink = null;
 
-    public DiscordCmd(JavaPlugin plugin) {
+    public DiscordCmd(JavaPlugin plugin, String discordLink) {
+        this._discordLink = discordLink;
     }
 
     @Override
@@ -23,7 +25,7 @@ public class DiscordCmd implements Listener, CommandExecutor {
         }
 
         Server s = Bukkit.getServer();
-        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"Join our \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"https://discord.gg/ecsWZHCkAS\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"!\"}]");
+        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"Join our \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"" + this._discordLink + "\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"!\"}]");
         return true;
     }
 }

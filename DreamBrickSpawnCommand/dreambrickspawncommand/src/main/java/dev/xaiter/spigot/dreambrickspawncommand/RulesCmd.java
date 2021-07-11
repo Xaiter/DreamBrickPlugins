@@ -11,8 +11,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class RulesCmd implements Listener, CommandExecutor {
 
     private final String PERMISSIONS_RULES = "dreambrickspawncommand.rules";
+    private String _discordLink = null;
 
-    public RulesCmd(JavaPlugin plugin) {
+    public RulesCmd(JavaPlugin plugin, String discordLink) 
+    {
+        this._discordLink = discordLink;
     }
 
     @Override
@@ -26,7 +29,7 @@ public class RulesCmd implements Listener, CommandExecutor {
         s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"[1] \",\"color\":\"gold\"},{\"text\":\"Don't be a dick.\",\"color\":\"gray\"}]");
         s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"[2] \",\"color\":\"gold\"},{\"text\":\"No hacking/dupe exploiting\",\"color\":\"gray\"}]");
         s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"[3] \",\"color\":\"gold\"},{\"text\":\"Don't make lag machines.\",\"color\":\"gray\"}]");
-        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"See the \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"https://discord.gg/F4eE6aM\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\" for more information\"}]");
+        s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + sender.getName() + " [\"\",{\"text\":\"See the \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"" + this._discordLink + "\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\" for more information\"}]");
         return true;
     }
 }

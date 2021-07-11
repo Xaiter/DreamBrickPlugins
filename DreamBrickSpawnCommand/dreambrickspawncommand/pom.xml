@@ -14,9 +14,18 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.source>16</maven.compiler.source>
+    <maven.compiler.target>16</maven.compiler.target>
+    <java.version>16</java.version>
   </properties>
+
+  <repositories>
+      <!-- This adds the Spigot Maven repository to the build -->   
+      <repository>
+          <id>spigot-repo</id>
+          <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+      </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
@@ -27,10 +36,22 @@
     </dependency>
     <dependency>
       <groupId>org.spigotmc</groupId>
-      <artifactId>spigot-api</artifactId>
-      <version>1.15-R0.1-SNAPSHOT</version>
+      <artifactId>spigot</artifactId>
+      <version>1.17.1-R0.1-SNAPSHOT</version>
       <scope>provided</scope>
-    </dependency>    
+    </dependency>        
+    <dependency>
+      <groupId>org.spigotmc</groupId>
+      <artifactId>spigot-api</artifactId>
+      <version>1.17-R0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bukkit</groupId>
+      <artifactId>craftbukkit</artifactId>
+      <version>1.17.1-R0.1-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>      
   </dependencies>
 
   <build>
@@ -49,6 +70,9 @@
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
+          <configuration>
+              <release>16</release>
+          </configuration>            
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>

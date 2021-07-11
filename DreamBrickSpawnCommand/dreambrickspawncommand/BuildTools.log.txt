@@ -1,0 +1,15 @@
+Loading BuildTools version: git-BuildTools-b849734-131 (#131)
+Java Version: Java 16
+Current Path: C:\Code\DreamBrickPlugins\DreamBrickSpawnCommand\dreambrickspawncommand\.
+Exception in thread "main" joptsimple.OptionArgumentConversionException: Cannot parse argument 'craftbukkitcd' of option compile
+	at joptsimple.AbstractOptionSpec.convertWith(AbstractOptionSpec.java:92)
+	at joptsimple.ArgumentAcceptingOptionSpec.convert(ArgumentAcceptingOptionSpec.java:277)
+	at joptsimple.OptionSet.valuesOf(OptionSet.java:223)
+	at org.spigotmc.builder.Builder.main(Builder.java:180)
+	at org.spigotmc.builder.Bootstrap.main(Bootstrap.java:27)
+Caused by: joptsimple.ValueConversionException: Value [craftbukkitcd] is not one of [[NONE,CRAFTBUKKIT,SPIGOT]]
+	at joptsimple.util.EnumConverter.convert(EnumConverter.java:63)
+	at joptsimple.util.EnumConverter.convert(EnumConverter.java:41)
+	at joptsimple.internal.Reflection.convertWith(Reflection.java:124)
+	at joptsimple.AbstractOptionSpec.convertWith(AbstractOptionSpec.java:90)
+	... 4 more

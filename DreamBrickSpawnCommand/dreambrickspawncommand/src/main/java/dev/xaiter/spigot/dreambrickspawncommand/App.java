@@ -6,42 +6,65 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.craftbukkit.v1_17_R1.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
-import org.bukkit.event.player.PlayerBedLeaveEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.bukkit.Statistic;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
+import net.minecraft.core.BlockPosition;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.level.block.entity.TileEntity;
 
 public class App extends JavaPlugin implements Listener {
 
-    private final int TELEPORT_COST = 5;
+    private final int TELEPORT_COST = 3;
     private final String MSG_COLLECTIVE_DREAM = "You experience a collective dream...";
     private final String MSG_COLLECTIVE_DREAM_TIME_WARNING = "[You will be teleported to spawn in 5 seconds]";
     private final String MSG_TELEPORT_FAILED_NOT_ASLEEP = "You must be asleep to teleport to spawn! (Enter a bed)";
-    private final String MSG_TELEPORT_FAILED_CANNOT_AFFORD = "You need at least " + TELEPORT_COST + " vote flint to return to spawn! (Sorry!)";
+    private final String MSG_TELEPORT_FAILED_CANNOT_AFFORD = "You need at least " + TELEPORT_COST + " dream flint to return to spawn! (Type /balance to see how much you have)";
     private final String MSG_TELEPORT_FAILED_BED_OBSTRUCTED = "Teleport to Spawn failed.  Your bed is obstructed, you will not respawn at it.";
+    private final String MSG_RETURN_HOME = "Welcome to Dream Spawn!  Type /returnhome to return to your bed.";
     private final String BALANCE_SCOREBOARD_NAME = "balance";
+    private final String DIED_WITH_BED_SCOREBOARD_NAME = "DiedWithBed";
 
     private final String PERMISSIONS_SPAWN = "dreambrickspawncommand.spawn";
+    private final String DISCORD_LINK = "https://discord.gg/ecsWZHCkAS";
 
     private final HashMap<String, LocalDateTime> LAST_MOVED_TIMETABLE = new HashMap<String, LocalDateTime>();
+    private static final Material[] BED_MATERIALS = new Material[] { Material.RED_BED, Material.BLUE_BED, Material.CYAN_BED, Material.GRAY_BED, Material.LIME_BED, Material.PINK_BED, 
+                                                              Material.BLACK_BED, Material.BROWN_BED, Material.GREEN_BED, Material.WHITE_BED, Material.ORANGE_BED, 
+                                                              Material.PURPLE_BED, Material.YELLOW_BED, Material.MAGENTA_BED };
+    private static final ItemStack[] BED_ITEMSTACKS = CreateBedItemStacks();
+
+    private static final Material[] SIGN_MATERIALS = new Material[] { Material.OAK_SIGN, Material.BIRCH_SIGN, Material.ACACIA_SIGN, Material.JUNGLE_SIGN, Material.SPRUCE_SIGN, Material.DARK_OAK_SIGN,
+                                                                      Material.OAK_WALL_SIGN, Material.BIRCH_WALL_SIGN, Material.ACACIA_WALL_SIGN, Material.JUNGLE_WALL_SIGN, Material.SPRUCE_WALL_SIGN, Material.DARK_OAK_WALL_SIGN  };
 
     private BalanceCmd _balanceCmd;
     private DiscordCmd _discordCmd;
@@ -53,7 +76,7 @@ public class App extends JavaPlugin implements Listener {
 
     public App() {
     }
-
+    
 
 
     // General Plug-In Events
@@ -64,8 +87,8 @@ public class App extends JavaPlugin implements Listener {
 
         // Make fresh copies of our commands and filter...
         this._balanceCmd = new BalanceCmd(this);
-        this._discordCmd = new DiscordCmd(this);
-        this._rulesCmd = new RulesCmd(this);
+        this._discordCmd = new DiscordCmd(this, this.DISCORD_LINK);
+        this._rulesCmd = new RulesCmd(this, this.DISCORD_LINK);
         this._clearChatCmd = new ClearChatCmd(this);
         this._getBedLocCmd = new GetBedLocCmd(this);
         this._returnHomeCmd = new ReturnHomeCmd(this);
@@ -121,8 +144,148 @@ public class App extends JavaPlugin implements Listener {
         p.spigot().sendMessage(new TextComponent(""));
         p.spigot().sendMessage(welcomeLine3);
         p.spigot().sendMessage(new TextComponent(""));
-        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + e.getPlayer().getName() + " [\"\",{\"color\":\"dark_aqua\",\"text\":\"Got any questions?  Join our \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"https://discord.gg/F4eE6aM\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"color\":\"dark_aqua\",\"text\":\" or type /help for information on commands.\"}]");
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + e.getPlayer().getName() + " [\"\",{\"color\":\"dark_aqua\",\"text\":\"Got any questions?  Join our \"},{\"text\":\"[\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"text\":\"Discord\",\"color\":\"gold\",\"bold\":true,\"underlined\":true,\"clickEvent\":{\"action\":\"open_url\",\"value\":\"" + this.DISCORD_LINK + "\"}},{\"text\":\"]\",\"color\":\"red\",\"bold\":true,\"underlined\":false},{\"color\":\"dark_aqua\",\"text\":\" or type /help for information on commands.\"}]");
         p.spigot().sendMessage(welcomeLine4);
+    }
+
+    @EventHandler
+    public void onEntityDamageEvent(final EntityDamageEvent e) {
+        
+        // First check if this is a player - if it's not, we don't care
+        if(!(e.getEntity() instanceof Player)) {
+            return;
+        }
+
+        // If the damage isn't fatal, we don't care...
+        Player target = (Player)e.getEntity();
+        if(target.getHealth() > e.getFinalDamage()) {
+            return;
+        }
+
+        // If they have a bed set, we don't care...
+        if(!IsBedObstructed(target)) {
+            return;
+        }
+
+        // If they aren't carrying a bed, we don't care...
+        if(!IsPlayerCarryingBed(target)) {
+            return;
+        }
+
+        // Okay, FINALLY... we care.
+        final Server s = Bukkit.getServer();
+        final Objective o = s.getScoreboardManager().getMainScoreboard().getObjective(DIED_WITH_BED_SCOREBOARD_NAME);
+        final Score dummyScore = o.getScore("dummy");
+        
+        // Increment the death count... 
+        int deathCount = dummyScore.getScore() + 1;
+        dummyScore.setScore(deathCount);
+
+        // Print the message of shame
+        for (Player p : s.getOnlinePlayers()) {
+            MessagePlayer(p, deathCount + " nubs have died without using the bed they were holding!", ChatColor.DARK_RED);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        // If it's not a right click on a block, we don't care.
+        if(event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+
+        // If the clicked block is null, we don't care.
+        Block block = event.getClickedBlock();
+        if(block == null) {
+            return;
+        }
+
+        // If it's not a sign block, we don't care.
+        Material blockMaterial = block.getType();
+        if(!IsSignMaterial(blockMaterial)) {
+            return;
+        }
+
+        // Okay, it's a sign.  Grab the tile entity...
+        CraftWorld cw = (CraftWorld)block.getWorld();
+        TileEntity te = cw.getHandle().getTileEntity(new BlockPosition(block.getX(), block.getY(), block.getZ()));
+
+        // Now extract the NBT...
+        NBTTagCompound nbt = new NBTTagCompound();
+        te.save(nbt);
+
+        // Prep some arguments...
+        String senderName = event.getPlayer().getName();
+        String worldName = block.getWorld().getName().substring(6);
+        Server s = Bukkit.getServer();
+
+        // Execute each line!
+        try {
+            ExecuteSignCommandJson(s, nbt.getString("Text1"), senderName, worldName);
+            ExecuteSignCommandJson(s, nbt.getString("Text2"), senderName, worldName);
+            ExecuteSignCommandJson(s, nbt.getString("Text3"), senderName, worldName);
+            ExecuteSignCommandJson(s, nbt.getString("Text4"), senderName, worldName);    
+        } catch (ParseException e) {
+            s.getLogger().warning(e.toString());
+        }
+
+        // Cancel this event, we're done
+        event.setCancelled(true);
+    }
+
+    private void ExecuteSignCommandJson(Server s, String jsonString, String senderName, String worldName) throws ParseException, org.json.simple.parser.ParseException
+    {
+        JSONParser parser = new JSONParser();
+        JSONObject jsonObj = (JSONObject)parser.parse(jsonString);
+        
+        // See if this line has a click event...
+        Object clickEventNodeObj = jsonObj.getOrDefault("clickEvent", null);
+        if(clickEventNodeObj == null) {
+            s.getLogger().info("CLICK EVENT NODE IS NULL");
+            return;
+        }        
+
+        // Make sure the click event is "run_command"...
+        JSONObject clickEventNode = (JSONObject)clickEventNodeObj;
+        s.getLogger().info("CLICK EVENT NODE CONTENTS: " + clickEventNode.toString());
+        if(!clickEventNode.getOrDefault("action", "").toString().equals("run_command")) {
+            s.getLogger().info("ACTION NODE IS EMPTY");            
+            return;
+        }
+        
+        // Get the actual command, make sure it's not null...
+        String rawCommandString = clickEventNode.getOrDefault("value", "").toString();
+        if(rawCommandString.equals("")) {
+            s.getLogger().info("RAW COMMAND STRING IS EMPTY");
+            return;
+        }
+
+        // Now replace @s (sender) with the player who triggered the interaction...
+        if(rawCommandString.startsWith("/")) {
+            rawCommandString = rawCommandString.substring(1);
+        }
+        
+        String modifiedCommandString = rawCommandString.replaceAll("\\@s\\[", "@p[name=" + senderName + ",");
+        modifiedCommandString = modifiedCommandString.replaceAll("\\@s ", "@p[name=" + senderName + "] ");
+        modifiedCommandString = "execute as " + senderName + " at " + senderName + " run " + modifiedCommandString;
+        s.getLogger().info("Executing: " + modifiedCommandString + " as Console");
+
+        // And execute the command as console
+        s.dispatchCommand(Bukkit.getConsoleSender(), modifiedCommandString);
+    }
+
+
+    // AFK Tracker
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
+    public void onPlayerMove(final PlayerMoveEvent event) {
+        this.LAST_MOVED_TIMETABLE.put(event.getPlayer().getName(), LocalDateTime.now());
+    }
+
+    private boolean IsPlayerAFK(final String playerName) {
+        if(!this.LAST_MOVED_TIMETABLE.containsKey(playerName)) {
+            return false;
+        }
+        return ChronoUnit.SECONDS.between(this.LAST_MOVED_TIMETABLE.get(playerName), LocalDateTime.now()) > 299; // 5 minutes
     }
 
 
@@ -148,10 +311,9 @@ public class App extends JavaPlugin implements Listener {
         // For each player in the correct state, send them to spawn FIVE seconds later.
         for(final Player p : onlinePlayers) {
             if(IsPlayerValidSleepTarget(p)) {
+                MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
                 WakeUpAndTeleportPlayer(p, s);
                 ResetTimeSinceRest(p);
-                MessagePlayer(p, MSG_COLLECTIVE_DREAM, ChatColor.LIGHT_PURPLE);
-                MessagePlayer(p, MSG_COLLECTIVE_DREAM_TIME_WARNING, ChatColor.LIGHT_PURPLE);
             }
         }
 
@@ -160,16 +322,6 @@ public class App extends JavaPlugin implements Listener {
         s.getScheduler().scheduleSyncDelayedTask(this, () -> {
             s.dispatchCommand(Bukkit.getConsoleSender(), "time set morning");
         }, 80);
-    }
-
-    @EventHandler
-    public void onPlayerBedLeaveEvent(final PlayerBedLeaveEvent e) {
-        // unused for now...
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
-    public void onPlayerMove(final PlayerMoveEvent event) {
-        this.LAST_MOVED_TIMETABLE.put(event.getPlayer().getName(), LocalDateTime.now());
     }
 
     @Override
@@ -224,7 +376,12 @@ public class App extends JavaPlugin implements Listener {
 
             // And move 'em.
             TeleportToSpawn(s, tempPlayer);
+
+            // Also tell them how to return to their bed
+            MessagePlayer(tempPlayer, MSG_RETURN_HOME, ChatColor.LIGHT_PURPLE);
         }, 100);
+
+        MessagePlayer(p, MSG_COLLECTIVE_DREAM_TIME_WARNING, ChatColor.LIGHT_PURPLE);
     }
 
     private void TeleportToSpawn(final Server s, final Player p) {
@@ -295,13 +452,6 @@ public class App extends JavaPlugin implements Listener {
         return true;
     }
 
-    private boolean IsPlayerAFK(final String playerName) {
-        if(!this.LAST_MOVED_TIMETABLE.containsKey(playerName)) {
-            return false;
-        }
-        return ChronoUnit.SECONDS.between(this.LAST_MOVED_TIMETABLE.get(playerName), LocalDateTime.now()) > 299; // 5 minutes
-    }
-
     private boolean IsBedObstructed(final Player p) {
         return p.getBedSpawnLocation() == null;
     }
@@ -330,7 +480,31 @@ public class App extends JavaPlugin implements Listener {
         return s.getOnlinePlayers();
     }
 
+    private boolean IsPlayerCarryingBed(Player p) {
+        Inventory targetInv = p.getInventory();
+        for (ItemStack bedItemStack : BED_ITEMSTACKS) {
+            if(targetInv.contains(bedItemStack)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    private static ItemStack[] CreateBedItemStacks() {
+        ItemStack[] bedItemStacks = new ItemStack[BED_MATERIALS.length];
+        for(int i = 0; i < BED_MATERIALS.length; i++) {
+            bedItemStacks[i] = new ItemStack(BED_MATERIALS[i]);
+        }
+        return bedItemStacks;
+    }
+    
+    private static boolean IsSignMaterial(Material value) {
+        for (Material m : SIGN_MATERIALS) {
+            if(value == m)
+                return true;
+        }
+        return false;
+    }
 
     // Command Filter Event Passthrough
     @EventHandler
