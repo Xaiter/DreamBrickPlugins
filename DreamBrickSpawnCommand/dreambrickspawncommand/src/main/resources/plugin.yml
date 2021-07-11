@@ -34,7 +34,11 @@ commands:
   returnhome:
     description: Teleports you out of spawn, back to your bed.
     usage: /returnhome
-    permission: dreambrickspawncommand.returnhome    
+    permission: dreambrickspawncommand.returnhome
+  vote:
+    description: Shows personalized vote links
+    usage: /vote
+    permission: dreambrickspawncommand.vote
 
 
 permissions:
@@ -46,6 +50,7 @@ permissions:
       dreambrickspawncommand.discord: true
       dreambrickspawncommand.clearchat: true
       dreambrickspawncommand.getbedloc: true
+      dreambrickspawncommand.vote: true
   dreambrickspawncommand.spawn:
     description: Allows a player to return to spawn while in a bed.
     default: true
