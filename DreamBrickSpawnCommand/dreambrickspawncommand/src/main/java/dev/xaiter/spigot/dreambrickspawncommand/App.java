@@ -241,22 +241,18 @@ public class App extends JavaPlugin implements Listener {
         // See if this line has a click event...
         Object clickEventNodeObj = jsonObj.getOrDefault("clickEvent", null);
         if(clickEventNodeObj == null) {
-            s.getLogger().info("CLICK EVENT NODE IS NULL");
             return;
         }        
 
         // Make sure the click event is "run_command"...
         JSONObject clickEventNode = (JSONObject)clickEventNodeObj;
-        s.getLogger().info("CLICK EVENT NODE CONTENTS: " + clickEventNode.toString());
         if(!clickEventNode.getOrDefault("action", "").toString().equals("run_command")) {
-            s.getLogger().info("ACTION NODE IS EMPTY");            
             return;
         }
         
         // Get the actual command, make sure it's not null...
         String rawCommandString = clickEventNode.getOrDefault("value", "").toString();
         if(rawCommandString.equals("")) {
-            s.getLogger().info("RAW COMMAND STRING IS EMPTY");
             return;
         }
 
@@ -268,7 +264,6 @@ public class App extends JavaPlugin implements Listener {
         String modifiedCommandString = rawCommandString.replaceAll("\\@s\\[", "@p[name=" + senderName + ",");
         modifiedCommandString = modifiedCommandString.replaceAll("\\@s ", "@p[name=" + senderName + "] ");
         modifiedCommandString = "execute as " + senderName + " at " + senderName + " run " + modifiedCommandString;
-        s.getLogger().info("Executing: " + modifiedCommandString + " as Console");
 
         // And execute the command as console
         s.dispatchCommand(Bukkit.getConsoleSender(), modifiedCommandString);
