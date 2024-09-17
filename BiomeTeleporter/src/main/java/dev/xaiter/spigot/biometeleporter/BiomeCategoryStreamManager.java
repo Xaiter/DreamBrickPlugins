@@ -8,10 +8,8 @@ import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.function.Function;
 
 import org.bukkit.Bukkit;
-import org.bukkit.World;
 import org.bukkit.block.Biome;
 
 public class BiomeCategoryStreamManager extends HashMap<Biome, BufferedOutputStream> {

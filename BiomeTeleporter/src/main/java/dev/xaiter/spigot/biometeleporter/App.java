@@ -16,13 +16,12 @@ import org.bukkit.World;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Biome;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class App extends JavaPlugin implements CommandExecutor {
+public class App extends JavaPlugin {
 
     private BiomeGraphGenerator _graphGenerator;
     private Biome[] _biomeCategories;
@@ -39,13 +38,13 @@ public class App extends JavaPlugin implements CommandExecutor {
             folder.mkdirs();
         }
 
-        this._graphGenerator = new BiomeGraphGenerator(folder.toString());
+        this._graphGenerator = new BiomeGraphGenerator(folder.toString(), this);
         this._biomeCategories = _graphGenerator.GetBiomeCategories();
         
         this.getCommand("biometp").setExecutor(this);
 
         // oh god stop doing it this way why am I doing this
-        //this.RegenerateData();
+        this.RegenerateData();
     }
 
     @Override
@@ -156,11 +155,11 @@ public class App extends JavaPlugin implements CommandExecutor {
             s.dispatchCommand(consoleSender, "team join " + teamName + " " + p.getName());
 
             // Get them into the overworld!
-            s.dispatchCommand(consoleSender, "warp biometp_overworld_parking " + p.getName());
+            //s.dispatchCommand(consoleSender, "warp biometp_overworld_parking " + p.getName());
         }
 
         // Try to spread them around the chunk...
-        String cmd = "spreadplayers " + targetChunkX + " " + targetChunkZ + " 0 32 true @a[team=" + teamName + "]";
+        String cmd = "execute in minecraft:overworld run spreadplayers " + targetChunkX + " " + targetChunkZ + " 0 32 true @a[team=" + teamName + "]";
         l.info(cmd);
         boolean result = s.dispatchCommand(consoleSender, cmd);
 
@@ -168,14 +167,12 @@ public class App extends JavaPlugin implements CommandExecutor {
         if(!result) {
             // oh crap send them back
             for(Player p : affectedPlayers) {
-                s.dispatchCommand(consoleSender, "warp biomertp " + p.getName());
-                s.dispatchCommand(consoleSender, "team join spawn " + p.getName());
+                s.dispatchCommand(consoleSender, "warp overworld_spawn " + p.getName());
             }
         } else {
             // Set 'em to survival mode
             for(Player p : affectedPlayers) {
                 s.dispatchCommand(consoleSender, "gamemode survival " + p.getName());
-
                 s.dispatchCommand(consoleSender, "resetranks " + p.getName());
             }
         }
@@ -215,9 +212,9 @@ public class App extends JavaPlugin implements CommandExecutor {
         }
 
         World w = Bukkit.getServer().getWorld("world");
-        BiomeGraphGenerator t = new BiomeGraphGenerator(folder.toString());
+        BiomeGraphGenerator t = new BiomeGraphGenerator(folder.toString(), this);
         try {
-            t.GenerateBiomeData(folder.getAbsolutePath(), w, -10000, 10000, -10000, 10000, 1);
+            t.GenerateBiomeData(folder.getAbsolutePath(), w, -625, 625, -625, 625, 1);
         } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }

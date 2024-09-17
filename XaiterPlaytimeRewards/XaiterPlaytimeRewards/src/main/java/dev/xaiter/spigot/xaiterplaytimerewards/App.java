@@ -3,6 +3,7 @@ package dev.xaiter.spigot.xaiterplaytimerewards;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scoreboard.Criteria;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
 import org.bukkit.scoreboard.Scoreboard;
@@ -75,7 +76,8 @@ public class App extends JavaPlugin {
     private Objective CreateScoreboardObjectiveIfNotExists(Scoreboard mainScoreboard, String name, String displayName) {
         Objective obj = mainScoreboard.getObjective(name);
         if(obj == null) {
-            obj = mainScoreboard.registerNewObjective(name, name, displayName);
+            //obj = mainScoreboard.registerNewObjective(name, name, displayName);
+            obj = mainScoreboard.registerNewObjective(name, Criteria.DUMMY, displayName);
         }
         return obj;
     }

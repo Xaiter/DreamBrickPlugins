@@ -3,6 +3,7 @@ package dev.xaiter.spigot.dreambrickspawncommand;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Server;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -54,13 +55,33 @@ public class ReturnHomeCmd implements Listener, CommandExecutor {
             s.dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + targetPlayerName + " [\"\",{\"text\":\"You do not have a bed set.  Please RTP to exit spawn.\",\"color\":\"gray\"}]");
             return true;
         }
-
         // Otherwise, send them to their bed and set their game mode
-        s.dispatchCommand(Bukkit.getConsoleSender(), "execute in minecraft:overworld run tp " + targetPlayerName + " " + bedLoc.getBlockX() + " " + bedLoc.getBlockY() + " " + bedLoc.getBlockZ());
-        s.dispatchCommand(Bukkit.getConsoleSender(), "gms " + targetPlayerName);
+        //s.dispatchCommand(Bukkit.getConsoleSender(), "warp overworld_respawn_parking " + targetPlayerName);
+        s.dispatchCommand(Bukkit.getConsoleSender(), "execute in " + GetWorldNameId(bedLoc.getWorld()) + " run minecraft:tp " + targetPlayerName + " " + bedLoc.getBlockX() + " " + bedLoc.getBlockY() + " " + bedLoc.getBlockZ());
+        s.dispatchCommand(Bukkit.getConsoleSender(), "minecraft:gamemode survival " + targetPlayerName);
         s.dispatchCommand(Bukkit.getConsoleSender(), "resetranks " + targetPlayerName);
 
         // Success!
         return true;
+    }
+
+    private static final String GetWorldNameId(World world)
+    {
+        String dimension = "";
+        switch (world.getEnvironment()) {
+        case NETHER:
+            dimension = "minecraft:nether";
+            break;
+        case THE_END:
+            dimension = "minecraft:the_end";
+            break;
+        case NORMAL:
+            dimension = "minecraft:overworld";
+            break;
+        default:
+            // What?  Where the heck are we?  Do nothing, I guess??
+            break;
+        }
+        return dimension;
     }
 }

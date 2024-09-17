@@ -3,7 +3,6 @@ package dev.hx.spigot.resetranks;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.event.HandlerList;
@@ -11,7 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class App extends JavaPlugin implements Listener, CommandExecutor {
+public class App extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {

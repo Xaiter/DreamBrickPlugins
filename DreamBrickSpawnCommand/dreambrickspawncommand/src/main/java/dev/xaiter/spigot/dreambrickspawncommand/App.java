@@ -9,20 +9,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
-import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.craftbukkit.v1_17_R1.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerCommandSendEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent.BedEnterResult;
@@ -32,15 +28,9 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Score;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.bukkit.Statistic;
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.core.BlockPosition;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.level.block.entity.TileEntity;
 
 public class App extends JavaPlugin implements Listener {
 
@@ -63,21 +53,17 @@ public class App extends JavaPlugin implements Listener {
                                                               Material.PURPLE_BED, Material.YELLOW_BED, Material.MAGENTA_BED };
     private static final ItemStack[] BED_ITEMSTACKS = CreateBedItemStacks();
 
-    private static final Material[] SIGN_MATERIALS = new Material[] { Material.OAK_SIGN, Material.BIRCH_SIGN, Material.ACACIA_SIGN, Material.JUNGLE_SIGN, Material.SPRUCE_SIGN, Material.DARK_OAK_SIGN,
-                                                                      Material.OAK_WALL_SIGN, Material.BIRCH_WALL_SIGN, Material.ACACIA_WALL_SIGN, Material.JUNGLE_WALL_SIGN, Material.SPRUCE_WALL_SIGN, Material.DARK_OAK_WALL_SIGN  };
-
     private BalanceCmd _balanceCmd;
     private DiscordCmd _discordCmd;
     private RulesCmd _rulesCmd;
     private ClearChatCmd _clearChatCmd;
     private GetBedLocCmd _getBedLocCmd;
     private ReturnHomeCmd _returnHomeCmd;
+    private VoteCmd _voteCmd;
     private OpCommandFilter _commandFilter;
 
     public App() {
     }
-    
-
 
     // General Plug-In Events
     @Override
@@ -92,6 +78,7 @@ public class App extends JavaPlugin implements Listener {
         this._clearChatCmd = new ClearChatCmd(this);
         this._getBedLocCmd = new GetBedLocCmd(this);
         this._returnHomeCmd = new ReturnHomeCmd(this);
+        this._voteCmd = new VoteCmd(this);
         this._commandFilter = new OpCommandFilter(this);
 
         // Register Commands!
@@ -103,6 +90,7 @@ public class App extends JavaPlugin implements Listener {
         this.getCommand("rules").setExecutor(this._rulesCmd);
         this.getCommand("discord").setExecutor(this._discordCmd);
         this.getCommand("clearchat").setExecutor(this._clearChatCmd);
+        this.getCommand("vote").setExecutor(this._voteCmd);
     }
 
     @Override
@@ -114,6 +102,7 @@ public class App extends JavaPlugin implements Listener {
         HandlerList.unregisterAll((Listener) this._returnHomeCmd);
         HandlerList.unregisterAll((Listener) this._discordCmd);
         HandlerList.unregisterAll((Listener) this._clearChatCmd);
+        HandlerList.unregisterAll((Listener) this._voteCmd);
     }
 
     @EventHandler
@@ -186,89 +175,6 @@ public class App extends JavaPlugin implements Listener {
             MessagePlayer(p, deathCount + " nubs have died without using the bed they were holding!", ChatColor.DARK_RED);
         }
     }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        // If it's not a right click on a block, we don't care.
-        if(event.getAction() != Action.RIGHT_CLICK_BLOCK) {
-            return;
-        }
-
-        // If the clicked block is null, we don't care.
-        Block block = event.getClickedBlock();
-        if(block == null) {
-            return;
-        }
-
-        // If it's not a sign block, we don't care.
-        Material blockMaterial = block.getType();
-        if(!IsSignMaterial(blockMaterial)) {
-            return;
-        }
-
-        // Okay, it's a sign.  Grab the tile entity...
-        CraftWorld cw = (CraftWorld)block.getWorld();
-        TileEntity te = cw.getHandle().getTileEntity(new BlockPosition(block.getX(), block.getY(), block.getZ()));
-
-        // Now extract the NBT...
-        NBTTagCompound nbt = new NBTTagCompound();
-        te.save(nbt);
-
-        // Prep some arguments...
-        String senderName = event.getPlayer().getName();
-        String worldName = block.getWorld().getName().substring(6);
-        Server s = Bukkit.getServer();
-
-        // Execute each line!
-        try {
-            ExecuteSignCommandJson(s, nbt.getString("Text1"), senderName, worldName);
-            ExecuteSignCommandJson(s, nbt.getString("Text2"), senderName, worldName);
-            ExecuteSignCommandJson(s, nbt.getString("Text3"), senderName, worldName);
-            ExecuteSignCommandJson(s, nbt.getString("Text4"), senderName, worldName);    
-        } catch (ParseException e) {
-            s.getLogger().warning(e.toString());
-        }
-
-        // Cancel this event, we're done
-        event.setCancelled(true);
-    }
-
-    private void ExecuteSignCommandJson(Server s, String jsonString, String senderName, String worldName) throws ParseException, org.json.simple.parser.ParseException
-    {
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObj = (JSONObject)parser.parse(jsonString);
-        
-        // See if this line has a click event...
-        Object clickEventNodeObj = jsonObj.getOrDefault("clickEvent", null);
-        if(clickEventNodeObj == null) {
-            return;
-        }        
-
-        // Make sure the click event is "run_command"...
-        JSONObject clickEventNode = (JSONObject)clickEventNodeObj;
-        if(!clickEventNode.getOrDefault("action", "").toString().equals("run_command")) {
-            return;
-        }
-        
-        // Get the actual command, make sure it's not null...
-        String rawCommandString = clickEventNode.getOrDefault("value", "").toString();
-        if(rawCommandString.equals("")) {
-            return;
-        }
-
-        // Now replace @s (sender) with the player who triggered the interaction...
-        if(rawCommandString.startsWith("/")) {
-            rawCommandString = rawCommandString.substring(1);
-        }
-        
-        String modifiedCommandString = rawCommandString.replaceAll("\\@s\\[", "@p[name=" + senderName + ",");
-        modifiedCommandString = modifiedCommandString.replaceAll("\\@s ", "@p[name=" + senderName + "] ");
-        modifiedCommandString = "execute as " + senderName + " at " + senderName + " run " + modifiedCommandString;
-
-        // And execute the command as console
-        s.dispatchCommand(Bukkit.getConsoleSender(), modifiedCommandString);
-    }
-
 
     // AFK Tracker
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -392,7 +298,9 @@ public class App extends JavaPlugin implements Listener {
         }
 
         // Okay, we're good, send 'em to spawn!
-        s.dispatchCommand(s.getConsoleSender(), "warp overworld_spawn " +  p.getName());
+        s.dispatchCommand(s.getConsoleSender(), "warp spawn " +  p.getName());
+        s.dispatchCommand(s.getConsoleSender(), "team join spawn " +  p.getName());
+        s.dispatchCommand(s.getConsoleSender(), "gamemode adventure " +  p.getName());
     }
 
     private boolean TryPayForTeleport(final Server s, final Player p) {
@@ -491,14 +399,6 @@ public class App extends JavaPlugin implements Listener {
             bedItemStacks[i] = new ItemStack(BED_MATERIALS[i]);
         }
         return bedItemStacks;
-    }
-    
-    private static boolean IsSignMaterial(Material value) {
-        for (Material m : SIGN_MATERIALS) {
-            if(value == m)
-                return true;
-        }
-        return false;
     }
 
     // Command Filter Event Passthrough
